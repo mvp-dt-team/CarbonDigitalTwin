@@ -1,0 +1,88 @@
+@startuml
+
+skin rose
+
+title SensorModule
+
+
+interface Sensor {
+  + title: string
+  + position: string
+  + id: int
+  + properties: Property[] 
+  + readData(prop: Property)
+  + writeData(prop: Property)
+}
+
+interface Property {
+  + name: string
+  + unit: Unit
+}
+
+enum Unit {
+  m 
+  C*
+  kg
+  N 
+}
+
+class ModbusSensor extends Sensor {
+  + addres: int
+  
+}
+
+class ModbusProperty extends Property {
+  + addres: int
+  + location: ['HOLDING', 'COILS']
+  + type: ['uint, float]
+}
+
+interface ConnectionInterface {
+  + connect()
+  + disconnect()
+}
+
+class COMCClient extends ConnectionInterface {
+  + port: string
+  + baudrate: int
+  + timeout: int
+  + readData(prop: ModbusProperty): value
+  + writeData(prop: ModbusProperty, value)
+}
+
+
+Sensor "1" o-- "Many" Property
+Property --> Unit : measured in
+Sensor ..> ConnectionInterface
+
+interface DataStorageInterface {
+  + init()
+  + writeData(Sensor, Property, value)
+  - initSensorsRepository()
+  - initDataRepository()
+  + addSensor(Sensor)
+  + close()
+}
+
+class SqlLiteStorage extends DataStorageInterface {
+  + host: string
+  + password: string
+  + user: string
+  + database: string
+  
+  + clear()
+}
+
+class Manager {
+  + recordingInterval: int
+  + sensors: Sensor[]
+  + storage: DataStorageInterface
+  + startRecording()
+  + stopRegording()
+}
+
+Manager *- DataStorageInterface
+Manager "1" o-- "Many" Sensor
+
+
+@enduml
