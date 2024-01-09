@@ -1,8 +1,5 @@
 @startuml
 
-skin rose
-
-title SensorModule
 
 
 interface Sensor {
@@ -27,8 +24,8 @@ enum Unit {
 }
 
 class ModbusSensor extends Sensor {
-  + addres: int
-  
+  + address: int
+  + connection: COMCClient
 }
 
 class ModbusProperty extends Property {
@@ -40,6 +37,7 @@ class ModbusProperty extends Property {
 interface ConnectionInterface {
   + connect()
   + disconnect()
+  +isConnected: bool
 }
 
 class COMCClient extends ConnectionInterface {
@@ -53,6 +51,7 @@ class COMCClient extends ConnectionInterface {
 
 Sensor "1" o-- "Many" Property
 Property --> Unit : measured in
+ModbusSensor --> COMCClient : ask data
 Sensor ..> ConnectionInterface
 
 interface DataStorageInterface {
