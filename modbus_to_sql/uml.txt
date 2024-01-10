@@ -34,13 +34,13 @@ class ModbusProperty extends Property {
   + type: ['uint, float]
 }
 
-interface ConnectionInterface {
+interface Connection {
   + connect()
   + disconnect()
   +isConnected: bool
 }
 
-class COMCClient extends ConnectionInterface {
+class COMCClient extends Connection {
   + port: string
   + baudrate: int
   + timeout: int
@@ -52,18 +52,16 @@ class COMCClient extends ConnectionInterface {
 Sensor "1" o-- "Many" Property
 Property --> Unit : measured in
 ModbusSensor --> COMCClient : ask data
-Sensor ..> ConnectionInterface
+Sensor ..> Connection
 
 interface DataStorageInterface {
   + init()
   + writeData(Sensor, Property, value)
-  - initSensorsRepository()
-  - initDataRepository()
-  + addSensor(Sensor)
+  + getSensorsInfo(): Sensor[]
   + close()
 }
 
-class SqlLiteStorage extends DataStorageInterface {
+class MySQLStorage extends DataStorageInterface {
   + host: string
   + password: string
   + user: string

@@ -1,8 +1,8 @@
-from connection_interface import ConnectionInterface
+from modbus_to_sql.architecture_v1.connection import Connection
 import pymodbus.client as ModbusClient
 
 
-class COMClient(ConnectionInterface):
+class COMClient(Connection):
     modbus_client = None
 
     def __init__(self, port: str, baudrate: int, timeout: int = 5) -> None:

@@ -19,13 +19,13 @@ modbus_register_address = 0x00  # Адрес регистра, который в
 
 # Настройки MySQL
 mysql_host = 'localhost'
-mysql_user = 'your_username'
-mysql_password = 'your_password'
-mysql_database = 'your_database'
+
+mysql_database = 'temperature'
 
 
 # Инициализация Modbus клиента
-modbus_client = ModbusClient.ModbusSerialClient(method='rtu', port=com_port, baudrate=baud_rate, timeout=5)
+modbus_client = ModbusClient.ModbusSerialClient(
+    method='rtu', port=com_port, baudrate=baud_rate, timeout=5)
 modbus_client.connect()
 
 # # Инициализация MySQL соединения
@@ -43,14 +43,16 @@ try:
 
     # Чтение данных по протоколу Modbus
     print("read_holding_registers")
-    modbus_response = modbus_client.read_holding_registers(modbus_register_address, count=5, slave=modbus_address)
+    modbus_response = modbus_client.read_holding_registers(
+        modbus_register_address, count=5, slave=modbus_address)
     if modbus_response.isError():
         print("Error reading register!")
         print(modbus_response)
     else:
         print("try ti decode")
         print(modbus_response.registers)
-        print("Register value:", modbus_response.registers[modbus_register_address])
+        print("Register value:",
+              modbus_response.registers[modbus_register_address])
     # # Запись данных в MySQL
     # sql_query = "INSERT INTO your_table_name (com_port_data, modbus_data) VALUES (%s, %s)"
     # sql_data = (data_from_com_port, modbus_data)
@@ -67,7 +69,6 @@ except Exception as e:
 
 finally:
     # Закрытие соединений
-    # ser.close()
     modbus_client.close()
     # cursor.close()
     # mysql_connection.close()
