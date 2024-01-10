@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class ConnectionInterface(ABC):
+class Connection(ABC):
 
     @abstractmethod
     def is_connected(self) -> bool:
