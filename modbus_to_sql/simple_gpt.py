@@ -19,7 +19,8 @@ modbus_register_address = 0x00  # Адрес регистра, который в
 
 # Настройки MySQL
 mysql_host = 'localhost'
-
+mysql_user = 'digital_twin'
+mysql_password = 'digital_twin'
 mysql_database = 'temperature'
 
 
