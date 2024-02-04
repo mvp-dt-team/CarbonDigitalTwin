@@ -3,6 +3,7 @@ from unit import Unit
 
 
 @dataclass
-class Property():
+class Property:
+    id: int
     name: str
     unit: Unit

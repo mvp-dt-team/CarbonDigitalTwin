@@ -8,7 +8,7 @@ from pymodbus.exceptions import ModbusIOException
 
 
 class ModbusSensor(Sensor):
-    def __init__(self, title: str, position: str, id: int,
+    def __init__(self, title: str, position: int, id: int,
                  properties: Sequence[ModbusProperty],
                  address: int, connection: COMClient) -> None:
         super().__init__(title, position, id, properties)
@@ -45,6 +45,3 @@ class ModbusSensor(Sensor):
 
     def readAllData(self) -> Sequence[Any]:
         return super().readAllData()
-    
-    def writeData(self, property_index: int, data: Any) -> None:
-        return super().writeData(property_index, data)
