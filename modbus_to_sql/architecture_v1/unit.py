@@ -8,5 +8,5 @@ class Unit(Enum):
 
 
 def get_unit_from_str(unit_str: str) -> Unit:
-    if unit_str == "Celsius":
+    if unit_str == "Цельсии":
         return Unit.CELSIUS

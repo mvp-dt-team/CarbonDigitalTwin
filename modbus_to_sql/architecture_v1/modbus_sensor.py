@@ -1,9 +1,7 @@
-
 from typing import Any, Sequence
 from modbus_to_sql.architecture_v1.com_client import COMClient
-from modbus_to_sql.architecture_v1.property import Property
-from sensor import Sensor
-from modbus_property import ModbusProperty, RegisterLocation
+from modbus_to_sql.architecture_v1.sensor import Sensor
+from modbus_to_sql.architecture_v1.modbus_property import ModbusProperty, RegisterLocation
 from pymodbus.exceptions import ModbusIOException
 
 
@@ -17,6 +15,10 @@ class ModbusSensor(Sensor):
 
     def set_connection(self, connection: COMClient):
         self.connection = connection
+
+    def __str__(self):
+        return (self.title + '(m_addr: ' + str(self.address) + ')' if self.address is not None else self.title) + str(
+            self.properties)
 
     def readPropertyData(self, property_index: int) -> Any:
         if self.connection.is_connected() and self.connection.modbus_client is not None:
