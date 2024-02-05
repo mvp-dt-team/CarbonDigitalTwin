@@ -8,11 +8,14 @@ from pymodbus.exceptions import ModbusIOException
 
 
 class ModbusSensor(Sensor):
-    def __init__(self, title: str, position: int, id: int,
+    def __init__(self, title: str, id: int,
                  properties: Sequence[ModbusProperty],
-                 address: int, connection: COMClient) -> None:
-        super().__init__(title, position, id, properties)
+                 address: int) -> None:
+        super().__init__(title, id, properties)
+        self.connection = None
         self.address = address
+
+    def set_connection(self, connection: COMClient):
         self.connection = connection
 
     def readPropertyData(self, property_index: int) -> Any:
@@ -37,6 +40,7 @@ class ModbusSensor(Sensor):
                 else:
                     print(modbus_response.registers)
                     print("Register value:", modbus_response.registers[0])
+                    return modbus_response.registers[0]
 
             except ModbusIOException as modbus_error:
                 print(f"Ошибка Modbus: {modbus_error}")
