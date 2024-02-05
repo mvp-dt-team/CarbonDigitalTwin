@@ -1,0 +1,85 @@
+@startuml
+
+
+
+interface Sensor {
+  + title: string
+  + position: string
+  + id: int
+  + properties: Property[] 
+  + readData(prop: Property)
+  + writeData(prop: Property)
+}
+
+interface Property {
+  + name: string
+  + unit: Unit
+}
+
+enum Unit {
+  m 
+  C*
+  kg
+  N 
+}
+
+class ModbusSensor extends Sensor {
+  + address: int
+  + connection: COMCClient
+}
+
+class ModbusProperty extends Property {
+  + addres: int
+  + location: ['HOLDING', 'COILS']
+  + type: ['uint, float]
+}
+
+interface Connection {
+  + connect()
+  + disconnect()
+  +isConnected: bool
+}
+
+class COMCClient extends Connection {
+  + port: string
+  + baudrate: int
+  + timeout: int
+  + readData(prop: ModbusProperty): value
+  + writeData(prop: ModbusProperty, value)
+}
+
+
+Sensor "1" o-- "Many" Property
+Property --> Unit : measured in
+ModbusSensor --> COMCClient : ask data
+Sensor ..> Connection
+
+interface DataStorageInterface {
+  + init()
+  + writeData(Sensor, Property, value)
+  + getSensorsInfo(): Sensor[]
+  + close()
+}
+
+class MySQLStorage extends DataStorageInterface {
+  + host: string
+  + password: string
+  + user: string
+  + database: string
+  
+  + clear()
+}
+
+class Manager {
+  + recordingInterval: int
+  + sensors: Sensor[]
+  + storage: DataStorageInterface
+  + startRecording()
+  + stopRegording()
+}
+
+Manager *- DataStorageInterface
+Manager "1" o-- "Many" Sensor
+
+
+@enduml
