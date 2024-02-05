@@ -2,7 +2,7 @@ import time
 from typing import Sequence
 from uuid import uuid4
 from modbus_to_sql.architecture_v1.data_storage_interface import DataStorage
-from mysql.connector import connect, Error
+from mysql.connector import connect
 
 from modbus_to_sql.architecture_v1.modbus_sensor import ModbusSensor
 from modbus_to_sql.architecture_v1.property import Property
@@ -12,11 +12,15 @@ from modbus_to_sql.architecture_v1.unit import get_unit_from_str
 
 class MySQLStorage(DataStorage):
 
+    def close(self):
+        self.mysql_connection.close()
+
     def __init__(self, host: str, password: str, user: str, database: str) -> None:
         self.host = host
         self.password = password
         self.user = user
         self.database = database
+        
         self.mysql_connection = connect(
             host=self.host,
             user=self.user,

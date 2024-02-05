@@ -1,6 +1,7 @@
-from attr import dataclass
-from property import Property
+from dataclasses import dataclass
 from enum import Enum
+
+from modbus_to_sql.architecture_v1.property import Property
 
 
 class RegisterLocation(Enum):

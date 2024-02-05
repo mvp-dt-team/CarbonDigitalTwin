@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Sequence, Any
-from property import Property
-from sensor import Sensor
+
+from modbus_to_sql.architecture_v1.property import Property
+from modbus_to_sql.architecture_v1.sensor import Sensor
 
 
 class DataStorage(ABC):
