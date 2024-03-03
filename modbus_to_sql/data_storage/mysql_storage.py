@@ -1,17 +1,14 @@
 import time
-from typing import Sequence, List
+from typing import List
 from uuid import uuid4
-from modbus_to_sql.architecture_v1.data_storage_interface import DataStorage
 from mysql.connector import connect
 
-from modbus_to_sql.architecture_v1.modbus_sensor import ModbusSensor
-from modbus_to_sql.architecture_v1.property import Property
-from modbus_to_sql.architecture_v1.sensor import Sensor
-from modbus_to_sql.architecture_v1.unit import get_unit_from_str
+from modbus_to_sql.sensors_module.property import Property
+from modbus_to_sql.sensors_module.sensor import Sensor
 from modbus_to_sql.network_models.active_sensors_response import ActiveSensorsResponseItem, SensorProperty
 
 
-class MySQLStorage(DataStorage):
+class MySQLStorage():
 
     def close(self):
         self.mysql_connection.close()
