@@ -1,6 +1,6 @@
-from modbus_to_sql.architecture_v1.com_client import COMClient
-from modbus_to_sql.architecture_v1.modbus_sensor import ModbusSensor
-from modbus_to_sql.architecture_v1.mysql_storage import MySQLStorage
+from modbus_to_sql.sensors_module.modbus.com_client import COMClient
+from modbus_to_sql.sensors_module.modbus.modbus_sensor import ModbusSensor
+from modbus_to_sql.data_storage.mysql_storage import MySQLStorage
 
 # Настройки COM-порта
 com_port = 'COM2'

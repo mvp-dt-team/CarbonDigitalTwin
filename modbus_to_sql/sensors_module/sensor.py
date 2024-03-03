@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Sequence, Any
-from modbus_to_sql.architecture_v1.property import Property
+from modbus_to_sql.sensors_module.property import Property
 
 
 class Sensor(ABC):
@@ -9,10 +9,6 @@ class Sensor(ABC):
         self.title = title
         self.id = id
         self.properties = properties
-
-    @abstractmethod
-    def readAllData(self) -> Sequence[Any]:
-        pass
 
     @abstractmethod
     def readPropertyData(self, property_index: int) -> Any:

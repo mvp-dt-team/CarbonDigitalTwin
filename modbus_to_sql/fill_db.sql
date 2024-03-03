@@ -22,7 +22,8 @@ VALUES ('Температура у входа в фильеру', 'Цельси�
 INSERT INTO sensor_params (sensor_item_id, property_id, param_name, param_value)
 VALUES (1, null, 'address', '1'),
        (1, 1, 'location', 'HOLDING_REGISTERS'),
-       (1, 1, 'register', '1');
+       (1, 1, 'register', '1'),
+       (1, 1, 'data_type', 'int16');
 
 # Информация о том, какие конкретные данные получает один конкретный датчик
 INSERT INTO sensor_source_mapping

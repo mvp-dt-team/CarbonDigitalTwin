@@ -1,4 +1,4 @@
-from modbus_to_sql.architecture_v1.connection import Connection
+from modbus_to_sql.sensors_module.connection import Connection
 import pymodbus.client as ModbusClient
 
 

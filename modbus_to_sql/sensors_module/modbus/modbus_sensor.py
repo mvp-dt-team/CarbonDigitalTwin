@@ -1,8 +1,11 @@
 from typing import Any, Sequence
-from modbus_to_sql.architecture_v1.com_client import COMClient
-from modbus_to_sql.architecture_v1.sensor import Sensor
-from modbus_to_sql.architecture_v1.modbus_property import ModbusProperty, RegisterLocation
+from modbus_to_sql.sensors_module.modbus.com_client import COMClient
+from modbus_to_sql.sensors_module.sensor import Sensor
+from modbus_to_sql.sensors_module.modbus.modbus_property import ModbusProperty, RegisterLocation, modbus_data_type_from_str
 from pymodbus.exceptions import ModbusIOException
+
+from modbus_to_sql.sensors_module.unit import get_unit_from_str
+from modbus_to_sql.network_models.active_sensors_response import ActiveSensorsResponseItem
 
 
 class ModbusSensor(Sensor):
@@ -10,6 +13,26 @@ class ModbusSensor(Sensor):
                  properties: Sequence[ModbusProperty],
                  address: int) -> None:
         super().__init__(title, id, properties)
+        self.connection = None
+        self.address = address
+
+    def init_from_network(self, sensor_data: ActiveSensorsResponseItem) -> None:
+        # добавить проверку наличия свойств и выдать соответствующие ошибки
+        address = int(sensor_data.parameters.get("address", 0))
+
+        properties = [
+            ModbusProperty(
+                id=prop.p_id,
+                name=prop.name,
+                unit=get_unit_from_str(prop.unit),
+                address=int(prop.parameters.get("register", 0)),
+                location=RegisterLocation[prop.parameters.get("location", "HOLDING_REGISTERS")],
+                dataType=modbus_data_type_from_str(prop.parameters.get("data_type", ""))
+            )
+            for prop in sensor_data.properties
+        ]
+
+        super().__init__(title=sensor_data.s_type, id=sensor_data.s_id, properties=properties)
         self.connection = None
         self.address = address
 
@@ -48,6 +71,3 @@ class ModbusSensor(Sensor):
                 print(f"Ошибка Modbus: {modbus_error}")
             except Exception as e:
                 print(f"Ошибка: {e}")
-
-    def readAllData(self) -> Sequence[Any]:
-        return super().readAllData()
