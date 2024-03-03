@@ -2,6 +2,7 @@ from typing import List, Any
 import requests
 
 from modbus_to_sql.sensors_module.modbus.modbus_sensor import ModbusSensor
+from modbus_to_sql.sensors_module.random_sensor.random_sensor import RandomSensor
 
 data_storage_address = 'http://localhost:3000'
 
@@ -58,9 +59,9 @@ def create_sensors_from_response(items: List[ActiveSensorsResponseItem]) -> List
         if item.s_type == "modbus":
             sensor = ModbusSensor(sensor_data=item)
             sensors.append(sensor)
-        elif item.s_type == "anotherType":
+        elif item.s_type == "random_sensor":
             # Предположим, что у AnotherSensorType есть подходящий метод создания или конструктор
-            sensor = AnotherSensorType(sensor_data=item)
+            sensor = RandomSensor(sensor_data=item)
             sensors.append(sensor)
         else:
             print(f"Unknown sensor type: {item.s_type}")

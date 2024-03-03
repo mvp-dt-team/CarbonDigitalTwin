@@ -2,7 +2,7 @@ from modbus_to_sql.sensors_module.connection import Connection
 import pymodbus.client as ModbusClient
 
 
-class COMClient(Connection):
+class ModbusRTUClient(Connection):
     modbus_client = None
 
     def __init__(self, port: str, baudrate: int, timeout: int = 5) -> None:
