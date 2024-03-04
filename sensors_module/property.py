@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from modbus_to_sql.architecture_v1.unit import Unit
+from sensors_module.unit import Unit
 
 
 @dataclass
