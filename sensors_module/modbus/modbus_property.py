@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from modbus_to_sql.sensors_module.property import Property
+from sensors_module.property import Property
 
 
 class RegisterLocation(Enum):
