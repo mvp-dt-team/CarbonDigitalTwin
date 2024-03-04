@@ -1,17 +1,17 @@
-from typing import Any, Sequence, Dict
-from modbus_to_sql.sensors_module.modbus.modbus_rtu_client import ModbusRTUClient
-from modbus_to_sql.sensors_module.sensor import Sensor
-from modbus_to_sql.sensors_module.modbus.modbus_property import ModbusProperty, RegisterLocation, \
+from typing import Any, Dict
+from sensors_module.modbus.modbus_rtu_client import ModbusRTUClient
+from sensors_module.sensor import Sensor
+from sensors_module.modbus.modbus_property import ModbusProperty, RegisterLocation, \
     modbus_data_type_from_str
 from pymodbus.exceptions import ModbusIOException
 
-from modbus_to_sql.sensors_module.unit import get_unit_from_str
-from modbus_to_sql.network_models.active_sensors_response import ActiveSensorsResponseItem
+from sensors_module.unit import get_unit_from_str
+from network_models.active_sensors_response import ActiveSensorsResponseItem
 
 
 class ModbusSensor(Sensor):
-    def readAllProperties(self) -> Dict[int, Any]:
-        return {p_id: self.readPropertyData(p_id) for p_id in self.properties}
+    def read_all_properties(self) -> Dict[int, Any]:
+        return {p_id: self.read_property_data(p_id) for p_id in self.properties}
 
     def __init__(self, title: str, s_id: int,
                  properties: Dict[int, ModbusProperty],
@@ -20,10 +20,10 @@ class ModbusSensor(Sensor):
         self.connection = None
         self.address = address
 
-    @staticmethod
-    def init_from_network(sensor_data: ActiveSensorsResponseItem) -> ModbusSensor:
+    @classmethod
+    def from_network(cls, sensor: ActiveSensorsResponseItem) -> 'Sensor':
         # добавить проверку наличия свойств и выдать соответствующие ошибки
-        address = int(sensor_data.parameters.get("address", 0))
+        address = int(sensor.parameters.get("address", 0))
 
         properties = {
             prop.p_id: ModbusProperty(
@@ -34,10 +34,10 @@ class ModbusSensor(Sensor):
                 location=RegisterLocation[prop.parameters.get("location", "HOLDING_REGISTERS")],
                 dataType=modbus_data_type_from_str(prop.parameters.get("data_type", ""))
             )
-            for prop in sensor_data.properties
+            for prop in sensor.properties
         }
 
-        return ModbusSensor(sensor_data.s_type, sensor_data.s_id, properties, address)
+        return cls(sensor.s_type, sensor.s_id, properties, address)
 
     def set_connection(self, connection: ModbusRTUClient):
         self.connection = connection
@@ -46,7 +46,7 @@ class ModbusSensor(Sensor):
         return (self.title + '(m_addr: ' + str(self.address) + ')' if self.address is not None else self.title) + str(
             self.properties)
 
-    def readPropertyData(self, property_id: int) -> Any:
+    def read_property_data(self, property_id: int) -> Any:
         if self.connection.is_connected() and self.connection.modbus_client is not None:
             try:
                 client = self.connection.modbus_client

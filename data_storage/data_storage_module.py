@@ -1,8 +1,8 @@
 from typing import List
 from fastapi import FastAPI
 
-from modbus_to_sql.data_storage.mysql_storage import MySQLStorage
-from modbus_to_sql.network_models.active_sensors_response import ActiveSensorsResponseItem
+from data_storage.mysql_storage import MySQLStorage
+from network_models.active_sensors_response import ActiveSensorsResponseItem
 
 # Настройки MySQL
 mysql_host = 'localhost'

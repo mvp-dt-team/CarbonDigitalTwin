@@ -3,9 +3,9 @@ from typing import List
 from uuid import uuid4
 from mysql.connector import connect
 
-from modbus_to_sql.sensors_module.property import Property
-from modbus_to_sql.sensors_module.sensor import Sensor
-from modbus_to_sql.network_models.active_sensors_response import ActiveSensorsResponseItem, SensorProperty
+from sensors_module.property import Property
+from sensors_module.sensor import Sensor
+from network_models.active_sensors_response import ActiveSensorsResponseItem, SensorProperty
 
 
 class MySQLStorage():

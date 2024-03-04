@@ -1,22 +1,39 @@
+from time import sleep
 from typing import List, Any
 import requests
 
-from modbus_to_sql.sensors_module.modbus.modbus_sensor import ModbusSensor
-from modbus_to_sql.sensors_module.random_sensor.random_sensor import RandomSensor
+from network_models.active_sensors_response import ActiveSensorsResponseItem
+from sensors_module.modbus.modbus_sensor import ModbusSensor
+from sensors_module.property import Property
+from sensors_module.random_sensor.random_sensor import RandomSensor
+from sensors_module.sensor import Sensor
+from sensors_module.unit import Unit
 
 data_storage_address = 'http://localhost:3000'
 
 
 class SensorsModule:
-    sensors: List[ModbusSensor]
+    sensors: List[Sensor]
 
     def __init__(self):
-        url = data_storage_address + '/active_sensors'
-        sensor_data = fetch_sensor_data(url)
+        self.sensors = [RandomSensor("test 1", 1, {1: Property(1, "first prop", Unit.CELSIUS)})]
+        repeat_every_5_seconds(self.read_sensors)
+        # url = data_storage_address + '/active_sensors'
+        # sensor_data = fetch_sensor_data(url)
 
-        if sensor_data:
-            process_sensor_data(sensor_data)
-            self.sensors = create_sensors_from_response(sensor_data)
+        # if sensor_data:
+        #     process_sensor_data(sensor_data)
+        #     self.sensors = create_sensors_from_response(sensor_data)
+
+    def read_sensors(self):
+        for sensor in self.sensors:
+            print(sensor.read_all_properties())
+
+
+def repeat_every_5_seconds(task):
+    while True:
+        task()
+        sleep(5)
 
 
 def fetch_sensor_data(url: str) -> List[Any]:
@@ -57,11 +74,11 @@ def create_sensors_from_response(items: List[ActiveSensorsResponseItem]) -> List
     sensors = []
     for item in items:
         if item.s_type == "modbus":
-            sensor = ModbusSensor(sensor_data=item)
+            sensor = ModbusSensor.from_network(item)
             sensors.append(sensor)
         elif item.s_type == "random_sensor":
             # Предположим, что у AnotherSensorType есть подходящий метод создания или конструктор
-            sensor = RandomSensor(sensor_data=item)
+            sensor = RandomSensor.from_network(item)
             sensors.append(sensor)
         else:
             print(f"Unknown sensor type: {item.s_type}")
