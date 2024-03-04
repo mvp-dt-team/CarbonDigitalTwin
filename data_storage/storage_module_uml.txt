@@ -1,0 +1,21 @@
+@startuml
+
+interface DataStorageInterface {
+  + write_data(prop_id, value)
+  + get_data_from_sensor(sensor_id): { p_id: value }
+  + get_last_prop_data(prop_id, amount): value[]
+  + get_active_sensors(): AciveSensorInfo[]
+  + add_sensor(AciveSensorInfo)
+  + made_sensor_active(sensor_id)
+  + made_sensor_inactive(sensor_id)
+}
+
+class StorageModuleConnector extends DataStorageInterface {
+  + host: string
+  + user: string
+  + password: string
+  + database: string
+}
+
+
+@enduml

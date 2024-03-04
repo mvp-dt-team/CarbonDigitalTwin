@@ -1,6 +1,6 @@
-from modbus_to_sql.architecture_v1.com_client import COMClient
-from modbus_to_sql.architecture_v1.modbus_sensor import ModbusSensor
-from modbus_to_sql.architecture_v1.mysql_storage import MySQLStorage
+from sensors_module.modbus.modbus_rtu_client import ModbusRTUClient
+from sensors_module.modbus.modbus_sensor import ModbusSensor
+from data_storage.mysql_storage import MySQLStorage
 
 # Настройки COM-порта
 com_port = 'COM2'
@@ -13,7 +13,7 @@ mysql_user = 'digital_twin'
 mysql_password = 'digital_twin'
 mysql_database = 'digital_twin_database'
 
-connection = COMClient(com_port, baud_rate, 5)
+connection = ModbusRTUClient(com_port, baud_rate, 5)
 connection.connect()
 
 storage = MySQLStorage(mysql_host, mysql_password, mysql_user, mysql_database)

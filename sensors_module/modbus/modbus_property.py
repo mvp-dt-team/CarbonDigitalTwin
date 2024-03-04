@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from modbus_to_sql.architecture_v1.property import Property
+from sensors_module.property import Property
 
 
 class RegisterLocation(Enum):
@@ -13,6 +13,12 @@ class RegisterLocation(Enum):
 
 class ModbusDataType(Enum):
     INT16 = 0
+
+
+def modbus_data_type_from_str(value: str) -> ModbusDataType:
+    if value == 'int16':
+        return ModbusDataType.INT16
+    return ModbusDataType.INT16
 
 
 @dataclass

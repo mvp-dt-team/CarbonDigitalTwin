@@ -4,28 +4,29 @@
 
 interface Sensor {
   + title: string
-  + position: string
   + id: int
-  + properties: Property[] 
-  + readData(prop: Property)
-  + writeData(prop: Property)
+  + properties: Property[]
+  + read_data(propId: number)
 }
 
 interface Property {
+  + id: string
   + name: string
   + unit: Unit
 }
 
 enum Unit {
-  m 
+  В формате строк
+  m
   C*
   kg
-  N 
+  N
 }
 
 class ModbusSensor extends Sensor {
   + address: int
   + connection: COMCClient
+  + set_connection(conn: COMCClient)
 }
 
 class ModbusProperty extends Property {
@@ -37,17 +38,15 @@ class ModbusProperty extends Property {
 interface Connection {
   + connect()
   + disconnect()
-  +isConnected: bool
+  +is_connected: bool
 }
 
 class COMCClient extends Connection {
   + port: string
   + baudrate: int
   + timeout: int
-  + readData(prop: ModbusProperty): value
-  + writeData(prop: ModbusProperty, value)
+  + read_data(prop: ModbusProperty): value
 }
-
 
 Sensor "1" o-- "Many" Property
 Property --> Unit : measured in
@@ -55,31 +54,13 @@ ModbusSensor --> COMCClient : ask data
 Sensor ..> Connection
 
 interface DataStorageInterface {
-  + init()
-  + writeData(Sensor, Property, value)
-  + getSensorsInfo(): Sensor[]
-  + close()
+  + write_data(Sensor, Property, value)
+  + get_active_sensors(): AciveSensorsInfo
 }
 
-class MySQLStorage extends DataStorageInterface {
+class StorageModuleConnector extends DataStorageInterface {
   + host: string
-  + password: string
-  + user: string
-  + database: string
-  
-  + clear()
 }
-
-class Manager {
-  + recordingInterval: int
-  + sensors: Sensor[]
-  + storage: DataStorageInterface
-  + startRecording()
-  + stopRegording()
-}
-
-Manager *- DataStorageInterface
-Manager "1" o-- "Many" Sensor
 
 
 @enduml
