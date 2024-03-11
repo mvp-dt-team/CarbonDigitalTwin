@@ -1,5 +1,6 @@
 from time import sleep
-from typing import List, Any
+import threading
+from typing import List, Any, Dict
 import requests
 
 from network_models.active_sensors_response import ActiveSensorsResponseItem
@@ -10,29 +11,74 @@ from sensors_module.sensor import Sensor
 from sensors_module.unit import Unit
 
 data_storage_address = 'http://localhost:3000'
+continue_running = True
 
 
 class SensorsModule:
-    sensors: List[Sensor]
+    sensors: Dict[int, Sensor]
+    asker = None
 
     def __init__(self):
-        self.sensors = [RandomSensor("test 1", 1, {1: Property(1, "first prop", Unit.CELSIUS)})]
-        repeat_every_5_seconds(self.read_sensors)
-        # url = data_storage_address + '/active_sensors'
-        # sensor_data = fetch_sensor_data(url)
+        from_db = True
+        if from_db:
+            url = data_storage_address + '/active_sensors'
+            sensor_data = fetch_sensor_data(url)
 
-        # if sensor_data:
-        #     process_sensor_data(sensor_data)
-        #     self.sensors = create_sensors_from_response(sensor_data)
+            if sensor_data:
+                process_sensor_data(sensor_data)
+                self.sensors = create_sensors_from_response(sensor_data)
+        else:
+            self.sensors = {
+                1: RandomSensor("test 1", 1, {
+                    1: Property(1, "first prop", Unit.CELSIUS),
+                    2: Property(2, "second prop", Unit.TOGGLER)
+                }),
+                2: RandomSensor("test 2", 1, {
+                    3: Property(3, "У входа в фильеру", Unit.CELSIUS),
+                    4: Property(4, "У выхода", Unit.CELSIUS),
+                    5: Property(5, "В центре", Unit.CELSIUS)
+                })
+            }
+
+        print("module inited")
+
+    def start(self, callback):
+        print("module starting")
+        self.asker = threading.Thread(target=lambda: repeat_every_5_seconds(callback, self.read_sensors_verbose))
+        print("thread started")
+        self.asker.start()
+        print("module started")
+
+    def stop(self):
+        global continue_running
+        print("module stopping")
+        continue_running = False
+        self.asker.join()
+        print("module stopped")
 
     def read_sensors(self):
-        for sensor in self.sensors:
-            print(sensor.read_all_properties())
+        print("reading sensors")
+        results = {}
+        for sensor_id in self.sensors:
+            sensor = self.sensors[sensor_id]
+            results[sensor_id] = sensor.read_all_properties()
+        return results
+
+    def read_sensors_verbose(self):
+        print("reading sensors verbose")
+        results = {}
+        for sensor_id in self.sensors:
+            sensor = self.sensors[sensor_id]
+            p_data = sensor.read_all_properties()
+            results[sensor.title] = {sensor.properties[p].name: p_data[p] for p in p_data}
+        return results
 
 
-def repeat_every_5_seconds(task):
-    while True:
-        task()
+def repeat_every_5_seconds(callback, task):
+    global continue_running
+    while continue_running:
+        print("task is running")
+        callback(task())
         sleep(5)
 
 
@@ -70,16 +116,16 @@ def process_sensor_data(sensor_data: List[Any]):
         print("---")
 
 
-def create_sensors_from_response(items: List[ActiveSensorsResponseItem]) -> List[Sensor]:
-    sensors = []
+def create_sensors_from_response(items: List[ActiveSensorsResponseItem]) -> Dict[int, Sensor]:
+    sensors = {}
     for item in items:
-        if item.s_type == "modbus":
+        if item['s_type'] == "modbus":
             sensor = ModbusSensor.from_network(item)
-            sensors.append(sensor)
-        elif item.s_type == "random_sensor":
+            sensors[sensor.id] = sensor
+        elif item['s_type'] == "random":
             # Предположим, что у AnotherSensorType есть подходящий метод создания или конструктор
             sensor = RandomSensor.from_network(item)
-            sensors.append(sensor)
+            sensors[sensor.id] = sensor
         else:
-            print(f"Unknown sensor type: {item.s_type}")
+            print(f"Unknown sensor type: {item['s_type']}")
     return sensors
