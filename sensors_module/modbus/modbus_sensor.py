@@ -23,21 +23,21 @@ class ModbusSensor(Sensor):
     @classmethod
     def from_network(cls, sensor: ActiveSensorsResponseItem) -> 'Sensor':
         # добавить проверку наличия свойств и выдать соответствующие ошибки
-        address = int(sensor.parameters.get("address", 0))
+        address = int(sensor['parameters'].get("address", 0))
 
         properties = {
-            prop.p_id: ModbusProperty(
-                id=prop.p_id,
-                name=prop.name,
-                unit=get_unit_from_str(prop.unit),
-                address=int(prop.parameters.get("register", 0)),
-                location=RegisterLocation[prop.parameters.get("location", "HOLDING_REGISTERS")],
-                dataType=modbus_data_type_from_str(prop.parameters.get("data_type", ""))
+            prop['p_id']: ModbusProperty(
+                id=prop['p_id'],
+                name=prop['name'],
+                unit=get_unit_from_str(prop['unit']),
+                address=int(prop['parameters'].get("register", 0)),
+                location=RegisterLocation[prop['parameters'].get("location", "HOLDING_REGISTERS")],
+                dataType=modbus_data_type_from_str(prop['parameters'].get("data_type", ""))
             )
-            for prop in sensor.properties
+            for prop in sensor['properties']
         }
 
-        return cls(sensor.s_type, sensor.s_id, properties, address)
+        return cls(sensor['s_type'], sensor['s_id'], properties, address)
 
     def set_connection(self, connection: ModbusRTUClient):
         self.connection = connection
