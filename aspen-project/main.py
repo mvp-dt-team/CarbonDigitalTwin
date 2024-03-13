@@ -1,45 +1,121 @@
+from PySide6.QtWidgets import QApplication, QMainWindow, QToolBar, QWidget, QVBoxLayout, QStackedWidget
+from PySide6.QtGui import QAction
+import sys
+import design
+import design2
+from functions import calculation_column_params, calculation_flow_composition
 from CodeLibraryCustom import Simulation
 import os
+import random
 
-working_path = os.getcwd()
+from design import Ui_MainWindow
+from design2 import Ui_SecondWindow
 
-## на вход принимаются разные файлы для двух кейсов
-sim = Simulation(AspenFileName="StyreneWithoutOptimizer.bkp", WorkingDirectoryPath=working_path + "\\schemes",
-                 VISIBILITY=False)
+class FirstWindow(QMainWindow):
+    def __init__(self, sim):
+        super().__init__()
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
+        self.ui.calc.clicked.connect(self.func_calculation_column_params)
+        self.sim = sim
+    
+    def func_calculation_column_params(self):
+        amountEB = float(self.ui.dataMol.toPlainText())
+        # TODO Вставить функцию
+        Condenser_RefluxRatio_Col11, Reboiler_BottomsToFeedRatio_Col11, Reboiler_BottomsToFeedRatio_Col12 = 2, 3, 4
+        self.ui.dataMol_2.setText(f"{Condenser_RefluxRatio_Col11: .4f}")
+        self.ui.dataMol_3.setText(f"{Reboiler_BottomsToFeedRatio_Col11: .4f}")
+        self.ui.dataMol_4.setText(f"{Reboiler_BottomsToFeedRatio_Col12: .4f}")
+
+class SecondWindow(QMainWindow):
+    def __init__(self, sim):
+        super().__init__()
+        self.ui = Ui_SecondWindow()
+        self.ui.setupUi(self)
+        self.ui.calc.clicked.connect(self.func_calculation_flow_composition)
+        self.sim = sim
+        self.results = {}
+        self.ui.pushButton.clicked.connect(self.change_flow)
+        self.ui.pushButton_3.clicked.connect(self.change_flow)
+        self.ui.pushButton_4.clicked.connect(self.change_flow)
+        self.ui.pushButton_5.clicked.connect(self.change_flow)
+        self.cases = {
+        "60-VAPOR": ["Общее", "ETHYLBEN", "TOLUENE", "BENZENE", "STYRENE", "ETHYLENE", "HYDROGEN", "METHANE", "WATER"],
+        "56-ORGAN": ["Общее", "ETHYLBEN", "TOLUENE", "BENZENE", "STYRENE", "ETHYLENE", "HYDROGEN", "METHANE", "WATER"],
+        "64-STYRE": ["Общее", "ETHYLBEN", "TOLUENE", "BENZENE", "STYRENE", "ETHYLENE", "HYDROGEN", "METHANE", "WATER"],
+        "62-ORGAN": ["Общее", "ETHYLBEN", "TOLUENE", "BENZENE", "STYRENE", "ETHYLENE", "HYDROGEN", "METHANE", "WATER"]
+        }
+
+    def func_calculation_flow_composition(self):
+        reflux_ratio = float(self.ui.dataMol.toPlainText())
+        bottoms_to_feed_ratio = float(self.ui.dataMol_5.toPlainText())
+        # TODO Дописать функцию
+   
+        self.results = calculation_flow_composition(12, 1231, self.sim)
+        self.change_flow()
+        # for stream in cases:
+        #     result[stream] = {}
+        #     for compound in cases[stream]:
+        #         result[stream][compound] = random.random()
+
+    def change_flow(self):
+        sender = self.sender()
+        if sender not in [self.ui.pushButton, self.ui.pushButton_3, self.ui.pushButton_4, self.ui.pushButton_5]:  # если sender is None, значит change_flow вызывается вручную, а не в ответ на событие
+            sender = self.ui.pushButton_5  # по умолчанию выбираем первую кнопку
+        self.ui.dataMol_16.setText(f"{self.results[sender.text().upper()]['Общее']:.4f}")
+        self.ui.dataMol_17.setText(f"{self.results[sender.text().upper()]['ETHYLBEN']:.4f}")
+        self.ui.dataMol_18.setText(f"{self.results[sender.text().upper()]['TOLUENE']:.4f}")
+        self.ui.dataMol_19.setText(f"{self.results[sender.text().upper()]['BENZENE']:.4f}")
+        self.ui.dataMol_20.setText(f"{self.results[sender.text().upper()]['STYRENE']:.4f}")
+        self.ui.dataMol_21.setText(f"{self.results[sender.text().upper()]['ETHYLENE']:.4f}")
+        self.ui.dataMol_22.setText(f"{self.results[sender.text().upper()]['HYDROGEN']:.4f}")
+        self.ui.dataMol_23.setText(f"{self.results[sender.text().upper()]['METHANE']:.4f}")
+        self.ui.dataMol_24.setText(f"{self.results[sender.text().upper()]['WATER']:.4f}")
+
+        for i in [self.ui.pushButton, self.ui.pushButton_3, self.ui.pushButton_4, self.ui.pushButton_5]:
+            i.setStyleSheet(u"color: white; font-family: Montserrat, sans-serif; font-size: 12px ;font-weight: bold; text-align: center; background-color: #4B594E; border-radius: 20%;")
+        sender.setStyleSheet(u"color: black; font-family: Montserrat, sans-serif; font-size: 12px ;font-weight: bold; text-align: center; background-color: #ffffff; border-radius: 20%;")
 
 
-def calculation_column_params(amountEB, simulation):
-    simulation.STRM_Set_TotalFlowBasis(Streamname='10-FEED', TotalFlowBasis=amountEB, Compoundname='ETHYLBEN')
-    simulation.Run()
-    col11_out = simulation.BLK_RADFRAC_GET_OUTPUTS('COL11')
-    col21_out = simulation.BLK_RADFRAC_GET_OUTPUTS('COL21')
-    return col11_out['Condenser_RefluxRatio'], col11_out['Reboiler_BottomsToFeedRatio'], col21_out[
-        'Reboiler_BottomsToFeedRatio'],
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("ASPEN UI FACTORY")
+        self.setGeometry(0, 0, 790, 600)
+        self.setFixedSize(790, 650)
 
+        self.toolbar = QToolBar("Toolbar")
+        self.toolbar.setFixedHeight(30)
+        self.addToolBar(self.toolbar)
+        self.toolbar.setStyleSheet(u"QToolBar { background-color: #577550; } QToolBar QToolButton { min-width: 20px;background-color: black; color: white; font-family: Montserrat, sans-serif; font-size: 15px ;font-weight: bold; text-align: center; margin-right: 10px; border-radius: 5%}")
 
-calculation_column_params(50, sim)
-sim.CloseAspen()
+        switch_first_action = QAction("Расчет параметров ректификационных колонн", self)
+        switch_first_action.triggered.connect(self.show_first_window)
+        self.toolbar.addAction(switch_first_action)
 
-sim = Simulation(AspenFileName="Styrene.bkp", WorkingDirectoryPath=working_path + "\\schemes", VISIBILITY=False)
+        switch_second_action = QAction("Расчет выходных потоков", self)
+        switch_second_action.triggered.connect(self.show_second_window)
+        self.toolbar.addAction(switch_second_action)
 
+        # Создаем окна, но не отображаем их сраз
 
-def calculation_flow_composition(reflux_ratio: float, bottoms_to_feed_ratio: float, simulation):
-    cases = {
-        "60-VAPOR": ["ETHYLBEN", "TOLUENE", "BENZENE", "STYRENE", "ETHYLENE", "HYDROGEN", "METHANE", "WATER"],
-        "56-ORGAN": ["ETHYLBEN", "TOLUENE", "BENZENE", "STYRENE", "ETHYLENE", "HYDROGEN", "METHANE", "WATER"],
-        "64-STYRE": ["ETHYLBEN", "TOLUENE", "BENZENE", "STYRENE", "ETHYLENE", "HYDROGEN", "METHANE", "WATER"],
-        "62-ORGAN": ["ETHYLBEN", "TOLUENE", "BENZENE", "STYRENE", "ETHYLENE", "HYDROGEN", "METHANE", "WATER"]
-    }
-    simulation.BLK_RADFRAC_Set_Refluxratio('COL11', reflux_ratio)
-    simulation.BLK_RADFRAC_Set_BottomToFeedRatio('COL11', bottoms_to_feed_ratio)
-    simulation.Run()
-    result = {}
-    for stream in cases:
-        result[stream]['Общее'] = simulation.STRM_Get_MassFlowMixed(stream)
-        result[stream] = {}
-        for compound in cases[stream]:
-            result[stream][compound] = simulation.STRM_Get_MassFracPerCompound(stream, compound)
+        self.working_path = os.getcwd()
+        # self.sim = Simulation(AspenFileName="StyreneWithoutOptimizer.bkp", WorkingDirectoryPath=self.working_path + "\\schemes",
+        #          VISIBILITY=False)
+        self.sim = None
+        self.setCentralWidget(FirstWindow(self.sim))
 
+    def show_first_window(self):
+        self.setCentralWidget(FirstWindow(self.sim))
 
-calculation_flow_composition(50, 0.6, sim)
-sim.CloseAspen()
+    def show_second_window(self):
+        self.setCentralWidget(SecondWindow(self.sim))
+    
+    def closeEvent(self, event):
+        self.sim.CloseAspen()
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec())
