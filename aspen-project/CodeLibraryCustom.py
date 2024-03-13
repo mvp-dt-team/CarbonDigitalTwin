@@ -1476,7 +1476,7 @@ class Simulation():
         TotalDestillateFlowrate = self.BLK.Elements(Blockname).Elements("Input").Elements("BASIS_D").Value 
         LiquidBottomRate = self.BLK.Elements(Blockname).Elements("Input").Elements("BASIS_B").Value
         DestillateToFeedRatio = self.BLK.Elements(Blockname).Elements("Input").Elements("BASIS_D:F").Value
-        BottomToFeedRatio = self.BLK.Elements(Blockname).Elements("Input").Elements("BASIS_B:F").Value
+        BottomToFeedRatio = self.BLK.Elements(Blockname).Elements("Input").Elements("B:F").Value
                 #Page 2     Streams
         FeedStreamNameNode = self.BLK.Elements(Blockname).Elements("Ports").Elements("F(IN)").Element
         for FeedStreamName in FeedStreamNameNode:
@@ -1681,7 +1681,7 @@ class Simulation():
     def BLK_RADFRAC_Set_DestillateToFeedRatio(self, Blockname, DestillateToFeedRatio):
         self.BLK.Elements(Blockname).Elements("Input").Elements("BASIS_D:F").Value = DestillateToFeedRatio
     def BLK_RADFRAC_Set_BottomToFeedRatio(self, Blockname, BottomToFeedRatio):
-        self.BLK.Elements(Blockname).Elements("Input").Elements("BASIS_B:F").Value = BottomToFeedRatio
+        self.BLK.Elements(Blockname).Elements("Input").Elements("B:F").Value = BottomToFeedRatio
     
 
 #Page 2     Streams    
@@ -4037,6 +4037,8 @@ class Simulation():
         return self.STRM.Elements(Streamname).Elements("Output").Elements("MOLEFRAC").Elements("MIXED").Elements(Compoundname).Value 
     def STRM_Get_MassFracPerCompound(self, Streamname, Compoundname):
         return self.STRM.Elements(Streamname).Elements("Output").Elements("MASSFRAC").Elements("MIXED").Elements(Compoundname).Value 
+    def STRM_Get_MassFlowMixed(self, Streamname):
+        return self.STRM.Elements(Streamname).Elements("Output").Elements("MASSFLMX").Elements("MIXED").Value 
     def STRM_Get_LiquidConcentrationPerCompound(self, Streamname, Compoundname):
         return self.STRM.Elements(Streamname).Elements("Output").Elements("X").Elements(Compoundname).Value 
     def STRM_Get_VaporConcentrationPerCompound(self, Streamname, Compoundname):
