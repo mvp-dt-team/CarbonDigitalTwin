@@ -123,7 +123,6 @@ def create_sensors_from_response(items: List[ActiveSensorsResponseItem]) -> Dict
             sensor = ModbusSensor.from_network(item)
             sensors[sensor.id] = sensor
         elif item['s_type'] == "random":
-            # Предположим, что у AnotherSensorType есть подходящий метод создания или конструктор
             sensor = RandomSensor.from_network(item)
             sensors[sensor.id] = sensor
         else:
