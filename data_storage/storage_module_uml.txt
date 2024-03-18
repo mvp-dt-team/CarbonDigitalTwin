@@ -6,6 +6,7 @@ interface DataStorageInterface {
   + get_last_prop_data(prop_id, amount): value[]
   + get_active_sensors(): AciveSensorInfo[]
   + add_sensor(AciveSensorInfo)
+  + get_data_from_sensors(sensor_ids[]): {p_id: value}
   + made_sensor_active(sensor_id)
   + made_sensor_inactive(sensor_id)
 }

@@ -3,6 +3,7 @@ from typing import List
 from uuid import uuid4
 from mysql.connector import connect
 
+from network_models.insert_measurement_request import Measurement
 from sensors_module.property import Property
 from sensors_module.sensor import Sensor
 from network_models.active_sensors_response import ActiveSensorsResponseItem, SensorProperty
@@ -26,15 +27,11 @@ class MySQLStorage():
             database=self.database
         )
 
-    def write_data(self, sensor: Sensor, property: Property, value):
-        measurement_time = time.time()
-        id = uuid4()
-        sensor_id = sensor.id
-        property_id = property.id
+    def add_measurement(self, measurement: Measurement, query_id: int, insert_ts: time) -> None:
         with self.mysql_connection.cursor() as cursor:
             query = ('INSERT INTO measurement (query_id, insert_ts, m_data, sensor_item_id, measurement_source_id) '
                      'VALUES (%s, %s, %s, %s, %s)')
-            cursor.execute(query, (id, measurement_time, value, sensor_id, property_id))
+            cursor.execute(query, (query_id, insert_ts, measurement.m_data, measurement.sensor_item_id, measurement.measurement_source_id))
             self.mysql_connection.commit()
             cursor.close()
 
