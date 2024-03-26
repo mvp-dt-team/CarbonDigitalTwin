@@ -21,8 +21,7 @@ class FirstWindow(QMainWindow):
     
     def func_calculation_column_params(self):
         amountEB = float(self.ui.dataMol.toPlainText())
-        # TODO Вставить функцию
-        Condenser_RefluxRatio_Col11, Reboiler_BottomsToFeedRatio_Col11, Reboiler_BottomsToFeedRatio_Col12 = 2, 3, 4
+        Condenser_RefluxRatio_Col11, Reboiler_BottomsToFeedRatio_Col11, Reboiler_BottomsToFeedRatio_Col12 = calculation_column_params(amountEB, self.sim)
         self.ui.dataMol_2.setText(f"{Condenser_RefluxRatio_Col11: .4f}")
         self.ui.dataMol_3.setText(f"{Reboiler_BottomsToFeedRatio_Col11: .4f}")
         self.ui.dataMol_4.setText(f"{Reboiler_BottomsToFeedRatio_Col12: .4f}")
@@ -49,14 +48,9 @@ class SecondWindow(QMainWindow):
     def func_calculation_flow_composition(self):
         reflux_ratio = float(self.ui.dataMol.toPlainText())
         bottoms_to_feed_ratio = float(self.ui.dataMol_5.toPlainText())
-        # TODO Дописать функцию
-   
-        self.results = calculation_flow_composition(12, 1231, self.sim)
+        self.results = calculation_flow_composition(reflux_ratio, bottoms_to_feed_ratio, self.sim)
+        # print(self.results)
         self.change_flow()
-        # for stream in cases:
-        #     result[stream] = {}
-        #     for compound in cases[stream]:
-        #         result[stream][compound] = random.random()
 
     def change_flow(self):
         sender = self.sender()
@@ -91,7 +85,7 @@ class MainWindow(QMainWindow):
 
         switch_first_action = QAction("Расчет параметров ректификационных колонн", self)
         switch_first_action.triggered.connect(self.show_first_window)
-        self.toolbar.addAction(switch_first_action)
+        #self.toolbar.addAction(switch_first_action)
 
         switch_second_action = QAction("Расчет выходных потоков", self)
         switch_second_action.triggered.connect(self.show_second_window)
@@ -100,10 +94,9 @@ class MainWindow(QMainWindow):
         # Создаем окна, но не отображаем их сраз
 
         self.working_path = os.getcwd()
-        # self.sim = Simulation(AspenFileName="StyreneWithoutOptimizer.bkp", WorkingDirectoryPath=self.working_path + "\\schemes",
-        #          VISIBILITY=False)
-        self.sim = None
-        self.setCentralWidget(FirstWindow(self.sim))
+        self.sim = Simulation(AspenFileName="Styrene.bkp", WorkingDirectoryPath=self.working_path + "\\schemes",
+                 VISIBILITY=False)
+        self.setCentralWidget(SecondWindow(self.sim))
 
     def show_first_window(self):
         self.setCentralWidget(FirstWindow(self.sim))
@@ -113,6 +106,7 @@ class MainWindow(QMainWindow):
     
     def closeEvent(self, event):
         self.sim.CloseAspen()
+        # self.sim2.CloseAspen()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
