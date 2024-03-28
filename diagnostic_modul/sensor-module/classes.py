@@ -16,24 +16,10 @@ import logging
 import json
 import random
 
-# logger = logging.getLogger('main_logger')
-# logger.setLevel(logging.DEBUG)
-
-# console_handler = logging.StreamHandler()
-# console_handler.setLevel(logging.DEBUG)
-
-# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-# console_handler.setFormatter(formatter)
-
-# logger.addHandler(console_handler)
 
 WEIGHTS_DEFECTS = {
     0: 0.05,
 }
-
-# class TypingSource(Enum):
-#     VIDEO = 0
-#     OTHER = 1
 
 def create_database():
     try:
@@ -63,32 +49,51 @@ class Handler:
         self.queue = Queue()
         self.source_model_mapping = {}
         self.polling_interval = 10
-        # logger.info('Инициализация обработчика')
+        self.running = True
+        self.logger = logging.getLogger('Submodule')
+        self.logger.setLevel(logging.DEBUG)
+
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.DEBUG)
+
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        console_handler.setFormatter(formatter)
+
+        self.logger.addHandler(console_handler)
+        self.logger.info('Инициализация обработчика')
+
 
 
     def add_source_model_mapping(self, source, model):
-        self.sources.append(source)
-        self.models.append(model)
-        self.source_model_mapping[source.id] = model
+        if source is not None and model is not None:
+            self.sources.append(source)
+            self.models.append(model)
+            self.source_model_mapping[source.id] = model
+        else:
+            raise Exception("Переданы пустые модель или источник")
 
     def polling_sensors(self) -> int:
         data = {}
-        for source in self.sources:
-            # logger.debug(f'Получаю данные с камеры {source.id}')
-            data[source.id] = source.get_value()
+        try:
+            for source in self.sources:
+                self.logger.debug(f'Получаю данные с камеры {source.id}')
+                data[source.id] = source.get_value()
+        except Exception as e:
+            print(e)
+            return e
         return data
 
-    def polling_sensors_async(self) -> None:
-        try:
-            while True:
-                # logger.info('Опрос камеры')
-                data = self.polling_sensors()
-                self.queue.put(data)
-                # logger.debug(self.queue.empty())
-                time.sleep(self.polling_interval)
-        except Exception as e:
-            print(f"Error in polling_sensors_async: {e}")
-            sys.exit(1)
+    # def polling_sensors_async(self) -> None:
+    #     try:
+    #         while True:
+    #             # logger.info('Опрос камеры')
+    #             data = self.polling_sensors()
+    #             self.queue.put(data)
+    #             # logger.debug(self.queue.empty())
+    #             time.sleep(self.polling_interval)
+    #     except Exception as e:
+    #         print(f"Error in polling_sensors_async: {e}")
+    #         sys.exit(1)
 
     def value_predict(self, source_id: int, source_value: Image) -> dict:
         model = self.source_model_mapping.get(source_id)
@@ -127,11 +132,10 @@ class Handler:
             # poll_thread = Thread(target=self.polling_sensors_async)
             # poll_thread.start()
 
-            while True:
+            while self.running:
                 data = self.polling_sensors()
                 self.queue.put(data)
                 if not self.queue.empty():
-                    # logger.info("Обрабатываем модель")
                     data = self.queue.get()
                     for source_id, source_value in data.items():
                         model_result = self.value_predict(source_id, source_value)
@@ -139,17 +143,19 @@ class Handler:
                             defects = []
                             for r in model_result[source_id]:
                                 for b in r.boxes:
-                                    # logger.debug(f'Найден дефект класса {int(b.cls)} с вероятногсть {float(b.conf)}')
                                     defects.append({'class_': int(b.cls), 'confidence_': float(b.conf)})
                             self.write_db_request(source_id, self.processing_values(defects))
+                time.sleep(self.polling_interval)
                 
                             
                             
         except Exception as e:
-            # logger.error(f"Error in run: {e}")
+            self.logger.error(f"Error in run: {e}")
             # poll_thread.join()
             sys.exit(1)
-
+    
+    def stop(self):
+        self.running = False
 class Source:
     def __init__(self, id, unit, number, address):
         self.id = id
@@ -158,10 +164,9 @@ class Source:
         self.address = address
 
     def get_value(self) -> Image:
-        # logger.debug(f'Обращение к камере {self.id}')
         cap = cv2.VideoCapture(self.address)
         if not cap.isOpened():
-            # logger.debug('Нет доступа к камере')
+            return 1
             exit()
 
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -171,7 +176,6 @@ class Source:
         ret, frame = cap.read()
         data = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         cap.release()
-        # logger.info(data)
         return data
 
 class Model:
