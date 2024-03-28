@@ -1,6 +1,6 @@
 from queue import Queue
 from torch import Tensor
-from typing import Union
+from typing import Union, List
 from enum import Enum
 import numpy as np
 import cv2
@@ -12,18 +12,24 @@ import time
 import sqlite3
 import sys
 import logging
+
+import json
 import random
 
-logger = logging.getLogger('main_logger')
-logger.setLevel(logging.DEBUG)
+# logger = logging.getLogger('main_logger')
+# logger.setLevel(logging.DEBUG)
 
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.DEBUG)
+# console_handler = logging.StreamHandler()
+# console_handler.setLevel(logging.DEBUG)
 
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-console_handler.setFormatter(formatter)
+# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# console_handler.setFormatter(formatter)
 
-logger.addHandler(console_handler)
+# logger.addHandler(console_handler)
+
+WEIGHTS_DEFECTS = {
+    0: 0.05,
+}
 
 # class TypingSource(Enum):
 #     VIDEO = 0
@@ -37,17 +43,15 @@ def create_database():
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS predictions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                model_version TEXT NOT NULL,
-                prediction TEXT NOT NULL,
+                source_id INT NOT NULL,
+                prediction REAL NOT NULL,
                 timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
 
         conn.commit()
         conn.close()
-        print("Database created successfully.")
     except Exception as e:
-        print(f"Error creating database: {e}")
         return False
 
     return True
@@ -59,7 +63,7 @@ class Handler:
         self.queue = Queue()
         self.source_model_mapping = {}
         self.polling_interval = 10
-        logger.info('Инициализация обработчика')
+        # logger.info('Инициализация обработчика')
 
 
     def add_source_model_mapping(self, source, model):
@@ -70,17 +74,17 @@ class Handler:
     def polling_sensors(self) -> int:
         data = {}
         for source in self.sources:
-            logger.debug(f'Получаю данные с камеры {source.id}')
+            # logger.debug(f'Получаю данные с камеры {source.id}')
             data[source.id] = source.get_value()
         return data
 
     def polling_sensors_async(self) -> None:
         try:
             while True:
-                logger.info('Опрос камеры')
+                # logger.info('Опрос камеры')
                 data = self.polling_sensors()
                 self.queue.put(data)
-                logger.debug(self.queue.empty())
+                # logger.debug(self.queue.empty())
                 time.sleep(self.polling_interval)
         except Exception as e:
             print(f"Error in polling_sensors_async: {e}")
@@ -90,27 +94,33 @@ class Handler:
         model = self.source_model_mapping.get(source_id)
         if model:
             result = model.predict(source_value)
-            return {model.version: result}
+            return {source_id: result}
         else:
             return {}
 
     # Пока записываем в тестовую
-    def write_db_request(self, value_list: list) -> int:
+    def write_db_request(self, source_id: int, prediction: float) -> int:
         try:
             conn = sqlite3.connect('data.db')
             cursor = conn.cursor()
 
-            for model_version, prediction in value_list:
-                cursor.execute('''
-                    INSERT INTO predictions (model_version, prediction) VALUES (?, ?)
-                ''', (model_version, prediction))
+            cursor.execute('''
+                INSERT INTO predictions (source_id, prediction) VALUES (?, ?)
+            ''', (source_id, prediction))
 
             conn.commit()
             conn.close()
-            return len(value_list)
+            return 0
         except Exception as e:
             print(f"Error writing to database: {e}")
             return 0
+        
+    def processing_values(self, defects: List[dict]):
+        if len(defects) == 0:
+            return 0
+        else:
+            return np.mean([WEIGHTS_DEFECTS[x['class_']] * x['confidence_'] for x in defects])
+
 
     def run(self) -> None:
         try:
@@ -119,17 +129,23 @@ class Handler:
 
             while True:
                 if not self.queue.empty():
-                    logger.info("Обрабатываем модель")
+                    # logger.info("Обрабатываем модель")
                     data = self.queue.get()
                     for source_id, source_value in data.items():
                         model_result = self.value_predict(source_id, source_value)
                         if model_result:
-                            # self.write_db_request(list(model_result.values()))
-                            logger.info(model_result)
+                            defects = []
+                            for r in model_result[source_id]:
+                                for b in r.boxes:
+                                    # logger.debug(f'Найден дефект класса {int(b.cls)} с вероятногсть {float(b.conf)}')
+                                    defects.append({'class_': int(b.cls), 'confidence_': float(b.conf)})
+                            self.write_db_request(source_id, self.processing_values(defects))
+                            
                             
         except Exception as e:
-            logger.error(f"Error in run: {e}")
-            # sys.exit(1)
+            # logger.error(f"Error in run: {e}")
+            poll_thread.join()
+            sys.exit(1)
 
 class Source:
     def __init__(self, id, unit, number, address):
@@ -139,10 +155,10 @@ class Source:
         self.address = address
 
     def get_value(self) -> Image:
-        logger.debug(f'Обращение к камере {self.id}')
+        # logger.debug(f'Обращение к камере {self.id}')
         cap = cv2.VideoCapture(self.address)
         if not cap.isOpened():
-            logger.debug('Нет доступа к камере')
+            # logger.debug('Нет доступа к камере')
             exit()
 
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -152,7 +168,7 @@ class Source:
         ret, frame = cap.read()
         data = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         cap.release()
-        logger.info(data)
+        # logger.info(data)
         return data
 
 class Model:
