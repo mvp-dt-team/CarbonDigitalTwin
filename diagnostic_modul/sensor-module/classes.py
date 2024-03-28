@@ -124,10 +124,12 @@ class Handler:
 
     def run(self) -> None:
         try:
-            poll_thread = Thread(target=self.polling_sensors_async)
-            poll_thread.start()
+            # poll_thread = Thread(target=self.polling_sensors_async)
+            # poll_thread.start()
 
             while True:
+                data = self.polling_sensors()
+                self.queue.put(data)
                 if not self.queue.empty():
                     # logger.info("Обрабатываем модель")
                     data = self.queue.get()
@@ -140,11 +142,12 @@ class Handler:
                                     # logger.debug(f'Найден дефект класса {int(b.cls)} с вероятногсть {float(b.conf)}')
                                     defects.append({'class_': int(b.cls), 'confidence_': float(b.conf)})
                             self.write_db_request(source_id, self.processing_values(defects))
+                
                             
                             
         except Exception as e:
             # logger.error(f"Error in run: {e}")
-            poll_thread.join()
+            # poll_thread.join()
             sys.exit(1)
 
 class Source:
