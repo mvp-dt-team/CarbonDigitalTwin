@@ -65,22 +65,18 @@ class Handler:
 
 
     def add_source_model_mapping(self, source, model):
-        if source is not None and model is not None:
+        if type(source) is Source and type(model) is Model:
             self.sources.append(source)
             self.models.append(model)
             self.source_model_mapping[source.id] = model
         else:
-            raise Exception("Переданы пустые модель или источник")
+            raise Exception("Модель или источник некорректны")
 
     def polling_sensors(self) -> int:
         data = {}
-        try:
-            for source in self.sources:
-                self.logger.debug(f'Получаю данные с камеры {source.id}')
-                data[source.id] = source.get_value()
-        except Exception as e:
-            print(e)
-            return e
+        for source in self.sources:
+            self.logger.debug(f'Получаю данные с камеры {source.id}')
+            data[source.id] = source.get_value()
         return data
 
     # def polling_sensors_async(self) -> None:
@@ -146,9 +142,6 @@ class Handler:
                                     defects.append({'class_': int(b.cls), 'confidence_': float(b.conf)})
                             self.write_db_request(source_id, self.processing_values(defects))
                 time.sleep(self.polling_interval)
-                
-                            
-                            
         except Exception as e:
             self.logger.error(f"Error in run: {e}")
             # poll_thread.join()
@@ -166,12 +159,13 @@ class Source:
     def get_value(self) -> Image:
         cap = cv2.VideoCapture(self.address)
         if not cap.isOpened():
-            return 1
-            exit()
+            raise Exception("Не удалось получить данные с источника")
 
+        # Заглушка временная, необходимо убрать перед настоящей съемкой TODO !
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         random_frame_index = random.randint(0, total_frames - 1)
         cap.set(cv2.CAP_PROP_POS_FRAMES, random_frame_index)
+        #####################
 
         ret, frame = cap.read()
         data = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
