@@ -1,6 +1,11 @@
+from CodeLibraryCustom import Simulation
 import os
 
 working_path = os.getcwd()
+
+## на вход принимаются разные файлы для двух кейсов
+sim = Simulation(AspenFileName="Styrene.bkp", WorkingDirectoryPath=working_path + "\\schemes", VISIBILITY=False)
+
 
 def calculation_column_params(amountEB, simulation):
     simulation.STRM_Set_TotalFlowBasis(Streamname='10-FEED', TotalFlowBasis=amountEB, Compoundname='ETHYLBEN')
@@ -11,6 +16,12 @@ def calculation_column_params(amountEB, simulation):
         'Reboiler_BottomsToFeedRatio'],
 
 
+calculation_column_params(50, sim)
+sim.CloseAspen()
+
+# working_path = os.getcwd()
+sim = Simulation(AspenFileName="StyreneWithoutOptimizer.bkp", WorkingDirectoryPath=os.path.join(working_path,"schemes2"),
+                 VISIBILITY=False)
 
 def calculation_flow_composition(reflux_ratio: float, bottoms_to_feed_ratio: float, simulation):
     cases = {
@@ -28,4 +39,7 @@ def calculation_flow_composition(reflux_ratio: float, bottoms_to_feed_ratio: flo
         result[stream]['Общее'] = simulation.STRM_Get_MassFlowMixed(stream)
         for compound in cases[stream]:
             result[stream][compound] = simulation.STRM_Get_MassFracPerCompound(stream, compound)
-    return result
+
+
+calculation_flow_composition(50, 0.6, sim)
+sim.CloseAspen()

@@ -20,6 +20,8 @@ API for controlling the Aspen Python Interface automatically
 If you change it, update it, fix something just email me such that I can also update my version to keep it as coherent as possible
 """
 
+
+
 class Simulation():
     """Class which starts a Simulation interface instance
     
@@ -36,8 +38,7 @@ class Simulation():
         os.chdir(WorkingDirectoryPath)          #Changes the Directory to  ..../AspenSimulation
         print("The new Directory where you should also have your Aspen file is : ")
         print(os.getcwd())  
-        print(os.path.abspath(AspenFileName))  
-
+        print(os.path.abspath(AspenFileName))        
         self.AspenSimulation.InitFromArchive2(os.path.abspath(AspenFileName))
         print(os.path.abspath(AspenFileName))
         print("The Aspen is active now. If you dont want to see aspen open again take VISIBITLY as False \n")
@@ -48,7 +49,6 @@ class Simulation():
         print(AspenFileName)
         self.AspenSimulation.Close(os.path.abspath(AspenFileName))
         print("\nAspen should be closed now")
-
 
 #This just shortens the path you need to call for Streams and Blocks
 
