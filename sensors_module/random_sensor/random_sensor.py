@@ -1,31 +1,31 @@
 import random
 from typing import Any, Dict
 
-from network_models.active_sensors_response import ActiveSensorsResponseItem
+from network_models.sensors_info import SensorInfo
 from sensors_module.property import Property
 from sensors_module.sensor import Sensor
 from sensors_module.unit import Unit, get_unit_from_str
 
 
 class RandomSensor(Sensor):
-    def __init__(self, title: str, s_id: int, properties: Dict[int, Property]):
-        super().__init__(title, s_id, properties)
+    def __init__(self, title: str, id: int, properties: Dict[int, Property]):
+        super().__init__(title, id, properties)
 
     @classmethod
-    def from_network(cls, sensor: ActiveSensorsResponseItem) -> 'Sensor':
+    def from_network(cls, sensor: SensorInfo) -> 'Sensor':
         properties = {
-            prop['p_id']: Property(
-                id=prop['p_id'],
+            prop['id']: Property(
+                id=prop['id'],
                 name=prop['name'],
                 unit=get_unit_from_str(prop['unit']),
             )
             for prop in sensor['properties']
         }
 
-        return RandomSensor(sensor['s_id'], sensor['s_id'], properties)
+        return RandomSensor(sensor['id'], sensor['id'], properties)
 
     def read_all_properties(self) -> Dict[int, Any]:
-        return {p_id: self.read_property_data(p_id) for p_id in self.properties}
+        return {id: self.read_property_data(id) for id in self.properties}
 
     def read_property_data(self, property_id: int) -> Any:
         prop = self.properties[property_id]

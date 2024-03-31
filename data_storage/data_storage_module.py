@@ -1,10 +1,12 @@
 from datetime import time
 from typing import List
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 
 from data_storage.mysql_storage import MySQLStorage
-from network_models.active_sensors_response import ActiveSensorsResponseItem
-from network_models.insert_measurement_request import InsertMeasurementsRequest
+from network_models.measurement_source_info import MeasurementSourceInfo
+from network_models.sensor_model_info import SensorModelInfo
+from network_models.sensors_info import SensorInfo
+from network_models.measurements_info import MeasurementsInfo
 
 # Настройки MySQL
 mysql_host = 'localhost'
@@ -22,25 +24,30 @@ def read_root():
     return {"Hello": "World"}
 
 
-@app.get("/active_sensors", response_model=List[ActiveSensorsResponseItem])
-async def get_active_sensors() -> List[ActiveSensorsResponseItem]:
-    sensors = storage.get_sensors_info()
-    return sensors
+@app.get("/sensor", response_model=List[SensorInfo])
+async def get_sensors(active: bool = Query(None, description="Filter sensors by their active state")) \
+        -> List[SensorInfo]:
+    return storage.get_sensors_info(active)
 
 
-@app.get("/sensors")
-async def get_sensors():
-    pass
+@app.get("/measurement_source")
+async def get_measurement_sources() -> List[MeasurementSourceInfo]:
+    return storage.get_measurement_sources()
 
 
-@app.get("/measurement_sources")
-async def get_measurement_sources():  # -> List[]:
-    pass
+@app.post("/measurement_source")
+async def add_measurement_source(source: MeasurementSourceInfo):
+    storage.add_measurement_source(source)
 
 
-@app.get("/sensor_models")
-async def get_sensor_models():
-    pass
+@app.get("/sensor_model")
+async def get_sensor_models() -> List[SensorModelInfo]:
+    return storage.get_sensors_models()
+
+
+@app.post("/sensor_model")
+async def add_sensor_model(model: SensorModelInfo):
+    storage.add_sensor_model(model)
 
 
 @app.patch("/sensors/{sensor_item_id}/enable")
@@ -53,16 +60,15 @@ async def disable_sensor(sensor_item_id: int):
     pass
 
 
-@app.post("/sensors/")
-async def add_sensor():
-    pass
+@app.post("/sensor")
+async def add_sensor(sensor: SensorInfo):
+    storage.add_sensor(sensor)
 
 
-@app.post("/measurements/")
-async def add_measurement(request: InsertMeasurementsRequest):
-    insert_time = time.fromisoformat(request.insert_ts)
+@app.post("/measurement")
+async def add_measurement(request: MeasurementsInfo):
     for measurement in request.insert_values:
-        storage.add_measurement(measurement, request.query_id, insert_time)
+        storage.add_measurement(measurement, request.query_id, request.insert_ts)
 
 
 @app.get("/measurements")  # add parameters like timedelta or smth and ids list

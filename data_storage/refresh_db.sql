@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS measurement
     m_data                FLOAT NOT NULL,
     sensor_item_id        INT   NOT NULL,
     measurement_source_id INT   NOT NULL,
-    PRIMARY KEY (query_id, insert_ts),
+    PRIMARY KEY (query_id, measurement_source_id),
     FOREIGN KEY (sensor_item_id) REFERENCES sensor_item (id),
     FOREIGN KEY (measurement_source_id) REFERENCES measurement_source (id)
 );
