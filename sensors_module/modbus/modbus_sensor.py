@@ -6,28 +6,28 @@ from sensors_module.modbus.modbus_property import ModbusProperty, RegisterLocati
 from pymodbus.exceptions import ModbusIOException
 
 from sensors_module.unit import get_unit_from_str
-from network_models.active_sensors_response import ActiveSensorsResponseItem
+from network_models.sensors_info import SensorInfo
 
 
 class ModbusSensor(Sensor):
     def read_all_properties(self) -> Dict[int, Any]:
-        return {p_id: self.read_property_data(p_id) for p_id in self.properties}
+        return {id: self.read_property_data(id) for id in self.properties}
 
-    def __init__(self, title: str, s_id: int,
+    def __init__(self, title: str, id: int,
                  properties: Dict[int, ModbusProperty],
                  address: int) -> None:
-        super().__init__(title, s_id, properties)
+        super().__init__(title, id, properties)
         self.connection = None
         self.address = address
 
     @classmethod
-    def from_network(cls, sensor: ActiveSensorsResponseItem) -> 'Sensor':
+    def from_network(cls, sensor: SensorInfo) -> 'Sensor':
         # добавить проверку наличия свойств и выдать соответствующие ошибки
         address = int(sensor['parameters'].get("address", 0))
 
         properties = {
-            prop['p_id']: ModbusProperty(
-                id=prop['p_id'],
+            prop['id']: ModbusProperty(
+                id=prop['id'],
                 name=prop['name'],
                 unit=get_unit_from_str(prop['unit']),
                 address=int(prop['parameters'].get("register", 0)),
@@ -37,7 +37,7 @@ class ModbusSensor(Sensor):
             for prop in sensor['properties']
         }
 
-        return cls(sensor['s_type'], sensor['s_id'], properties, address)
+        return cls(sensor['type'], sensor['id'], properties, address)
 
     def set_connection(self, connection: ModbusRTUClient):
         self.connection = connection

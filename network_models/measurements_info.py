@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from datetime import datetime
 from typing import List
 
 from pydantic import BaseModel
@@ -10,7 +10,7 @@ class Measurement(BaseModel):
     measurement_source_id: int
 
 
-class InsertMeasurementsRequest(BaseModel):
+class MeasurementsInfo(BaseModel):
     query_id: int
-    insert_ts: str
+    insert_ts: datetime
     insert_values: List[Measurement]

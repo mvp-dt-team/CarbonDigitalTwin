@@ -3,7 +3,7 @@ import threading
 from typing import List, Any, Dict
 import requests
 
-from network_models.active_sensors_response import ActiveSensorsResponseItem
+from network_models.sensors_info import SensorInfo
 from sensors_module.modbus.modbus_sensor import ModbusSensor
 from sensors_module.property import Property
 from sensors_module.random_sensor.random_sensor import RandomSensor
@@ -21,7 +21,7 @@ class SensorsModule:
     def __init__(self):
         from_db = True
         if from_db:
-            url = data_storage_address + '/active_sensors'
+            url = data_storage_address + '/sensor?active=true'
             sensor_data = fetch_sensor_data(url)
 
             if sensor_data:
@@ -102,29 +102,29 @@ def fetch_sensor_data(url: str) -> List[Any]:
 def process_sensor_data(sensor_data: List[Any]):
     # Простая обработка: печатаем информацию о каждом сенсоре
     for sensor in sensor_data:
-        print(f"Sensor ID: {sensor['s_id']}")
-        print(f"Sensor Type: {sensor['s_type']}")
+        print(f"Sensor ID: {sensor['id']}")
+        print(f"Sensor Type: {sensor['type']}")
         print(f" Sensor parameters:")
         for param_name, param_value in sensor['parameters'].items():
             print(f" - {param_name}: {param_value}")
         print("Properties:")
         for prop in sensor['properties']:
-            print(f" - Property ID: {prop['p_id']}, Unit: {prop['unit']}, Name: {prop['name']}")
+            print(f" - Property ID: {prop['id']}, Unit: {prop['unit']}, Name: {prop['name']}")
             print(f" - - Prop parameters:")
             for param_name, param_value in prop['parameters'].items():
                 print(f" - - - {param_name}: {param_value}")
         print("---")
 
 
-def create_sensors_from_response(items: List[ActiveSensorsResponseItem]) -> Dict[int, Sensor]:
+def create_sensors_from_response(items: List[SensorInfo]) -> Dict[int, Sensor]:
     sensors = {}
     for item in items:
-        if item['s_type'] == "modbus":
+        if item['type'] == "modbus":
             sensor = ModbusSensor.from_network(item)
             sensors[sensor.id] = sensor
-        elif item['s_type'] == "random":
+        elif item['type'] == "random":
             sensor = RandomSensor.from_network(item)
             sensors[sensor.id] = sensor
         else:
-            print(f"Unknown sensor type: {item['s_type']}")
+            print(f"Unknown sensor type: {item['type']}")
     return sensors

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
-from network_models.active_sensors_response import ActiveSensorsResponseItem
+from network_models.sensors_info import SensorInfo
 from sensors_module.property import Property
 
 
@@ -22,5 +22,7 @@ class Sensor(ABC):
 
     @classmethod
     @abstractmethod
-    def from_network(cls, sensor: ActiveSensorsResponseItem) -> 'Sensor':
+    def from_network(cls, sensor: SensorInfo) -> 'Sensor':
         pass
+
+
