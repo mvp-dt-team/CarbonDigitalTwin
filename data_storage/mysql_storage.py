@@ -35,9 +35,27 @@ class MySQLStorage():
             query = ('INSERT INTO measurement (query_id, insert_ts, m_data, sensor_item_id, measurement_source_id) '
                      'VALUES (%s, %s, %s, %s, %s)')
             cursor.execute(query, (
-                query_id, int(insert_ts.timestamp()), measurement.m_data, measurement.sensor_item_id, measurement.measurement_source_id))
+                query_id, int(insert_ts.timestamp()), measurement.m_data, measurement.sensor_item_id,
+                measurement.measurement_source_id))
             self.mysql_connection.commit()
             cursor.close()
+
+    def get_last_three_measurements_for_sources(self, measurement_source_ids: List[int]) -> List[Measurement]:
+        measurements = []
+        with self.mysql_connection.cursor() as cursor:
+            for source_id in measurement_source_ids:
+                query = ('''
+                    SELECT insert_ts, m_data, sensor_item_id, measurement_source_id FROM measurement 
+                    WHERE measurement_source_id = %s 
+                    ORDER BY insert_ts DESC 
+                    LIMIT 3
+                ''')
+                cursor.execute(query, (source_id,))
+                result = cursor.fetchall()
+                measurements.extend(
+                    [Measurement(insert_ts=measurement[0], m_data=measurement[1], sensor_item_id=measurement[2],
+                                 measurement_source_id=measurement[3]) for measurement in result])
+        return measurements
 
     # MEASUREMENT SOURCE ########################
 
@@ -121,8 +139,9 @@ class MySQLStorage():
                     property_parameters = {param_name: param_value for param_name, param_value, id in
                                            parameters if
                                            id == property_id}
-                    props.append(SensorProperty(measurement_source_id=property_id, name=property_name, unit=property_units,
-                                                parameters=property_parameters))
+                    props.append(
+                        SensorProperty(measurement_source_id=property_id, name=property_name, unit=property_units,
+                                       parameters=property_parameters))
 
                 sensors.append(SensorInfo(id=sensor_id, parameters=sensor_parameters,
                                           type=sensor_type, properties=props, is_active=is_active,
@@ -150,3 +169,9 @@ class MySQLStorage():
                 values.extend([(sensor_item_id, prop.measurement_source_id, param_name, prop.parameters[param_name])
                                for param_name in prop.parameters])
             cursor.executemany(query, values)
+
+    def toggle_sensor_activation(self, sensor_item_id: int, is_active: bool):
+        with self.mysql_connection.cursor() as cursor:
+            update_query = "UPDATE sensor_item SET is_active = %s WHERE id = %s"
+            cursor.execute(update_query, (is_active, sensor_item_id))
+            self.mysql_connection.commit()
