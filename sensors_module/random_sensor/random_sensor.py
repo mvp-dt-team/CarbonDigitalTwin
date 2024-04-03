@@ -1,5 +1,5 @@
 import random
-from typing import Any, Dict
+from typing import Any, Dict, Tuple, Callable
 
 from network_models.sensors_info import SensorInfo
 from sensors_module.property import Property
@@ -8,6 +8,14 @@ from sensors_module.unit import Unit, get_unit_from_str
 
 
 class RandomSensor(Sensor):
+    @classmethod
+    def sensor_parameters(cls) -> Dict[str, Tuple[str, Callable[[Any], bool]]]:
+        return {}
+
+    @classmethod
+    def property_parameters(cls) -> Dict[str, Tuple[str, Callable[[Any], bool]]]:
+        return {}
+
     def __init__(self, title: str, id: int, properties: Dict[int, Property]):
         super().__init__(title, id, properties)
 
