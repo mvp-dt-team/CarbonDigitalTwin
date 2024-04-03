@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Tuple, Callable
 from sensors_module.modbus.modbus_rtu_client import ModbusRTUClient
 from sensors_module.sensor import Sensor
 from sensors_module.modbus.modbus_property import ModbusProperty, RegisterLocation, \
@@ -10,6 +10,22 @@ from network_models.sensors_info import SensorInfo
 
 
 class ModbusSensor(Sensor):
+    @classmethod
+    def sensor_parameters(cls) -> Dict[str, Tuple[str, Callable[[Any], bool]]]:
+        return {
+            'address': ("Введите адрес датчика", lambda x: x.isdigit() and int(x) > 0)
+        }
+
+    @classmethod
+    def property_parameters(cls) -> Dict[str, Tuple[str, Callable[[Any], bool]]]:
+        return {
+            'address': ("Введите адрес регистра", lambda x: x.isdigit() and int(x) >= 0),
+            'location': ("Введите тип регистра:\n\tCOILS\n\tDISCRETE_INPUTS\n\tHOLDING_REGISTERS\n\tINPUT_REGISTERS",
+                         lambda x: x in ["COILS", "DISCRETE_INPUTS", "HOLDING_REGISTERS", "INPUT_REGISTERS"]),
+            'data_type': ("Введите тип данных:\n\tint16",
+                          lambda x: x in ["int16"])
+        }
+
     def read_all_properties(self) -> Dict[int, Any]:
         return {id: self.read_property_data(id) for id in self.properties}
 

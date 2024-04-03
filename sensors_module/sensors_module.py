@@ -19,7 +19,7 @@ class SensorsModule:
     asker = None
 
     def __init__(self):
-        from_db = True
+        from_db = False
         if from_db:
             url = data_storage_address + '/sensor?active=true'
             sensor_data = fetch_sensor_data(url)
@@ -29,11 +29,11 @@ class SensorsModule:
                 self.sensors = create_sensors_from_response(sensor_data)
         else:
             self.sensors = {
-                1: RandomSensor("test 1", 1, {
-                    1: Property(1, "first prop", Unit.CELSIUS),
-                    2: Property(2, "second prop", Unit.TOGGLER)
+                1: RandomSensor("Терморегулятор в промывочной ванне", 1, {
+                    1: Property(1, "Температура в ванне", Unit.CELSIUS),
+                    2: Property(2, "Состояние нагревателя", Unit.TOGGLER)
                 }),
-                2: RandomSensor("test 2", 1, {
+                2: RandomSensor("Термопара", 2, {
                     3: Property(3, "У входа в фильеру", Unit.CELSIUS),
                     4: Property(4, "У выхода", Unit.CELSIUS),
                     5: Property(5, "В центре", Unit.CELSIUS)

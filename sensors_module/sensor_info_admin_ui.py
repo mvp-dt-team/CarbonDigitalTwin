@@ -79,14 +79,17 @@ def add_sensor_model():
     )
 
 
+actions = [
+    {"name": "Получить список источников измерений", "function": get_measurement_sources},
+    {"name": "Добавить источник измерений", "function": add_measurement_source},
+    {"name": "Получить список моделей датчиков", "function": get_sensor_models},
+    {"name": "Добавить модель датчика", "function": add_sensor_model},
+    {"name": "Отобразить список экземпляров датчиков", "function": None},
+    {"name": "Добавить экземпляр датчика", "function": None},
+    {"name": "Отобразить последние измерения со всех точек", "function": None},
+    {"name": "Выйти", "function": exit}
+]
 def main_menu():
-    actions = [
-        {"name": "Получить список источников измерений", "function": get_measurement_sources},
-        {"name": "Добавить источник измерений", "function": add_measurement_source},
-        {"name": "Получить список моделей датчиков", "function": get_sensor_models},
-        {"name": "Добавить модель датчика", "function": add_sensor_model},
-        {"name": "Выйти", "function": exit}
-    ]
 
     while True:
         for i, action in enumerate(actions, start=1):
