@@ -1,8 +1,12 @@
+import datetime
+import json
+import random
 from time import sleep
 import threading
 from typing import List, Any, Dict
 import requests
 
+from network_models.measurements_info import MeasurementsInfo, Measurement
 from network_models.sensors_info import SensorInfo
 from sensors_module.modbus.modbus_sensor import ModbusSensor
 from sensors_module.property import Property
@@ -56,7 +60,7 @@ class SensorsModule:
         self.asker.join()
         print("module stopped")
 
-    def read_sensors(self):
+    def read_sensors(self) -> dict[int, dict[int, Any]]:
         print("reading sensors")
         results = {}
         for sensor_id in self.sensors:
@@ -72,6 +76,24 @@ class SensorsModule:
             p_data = sensor.read_all_properties()
             results[sensor.title] = {sensor.properties[p].name: p_data[p] for p in p_data}
         return results
+
+    def send_data_to_storage(self, data: dict[int, dict[int, Any]]):
+        print("sending data to storage")
+        values = []
+        for sensor_id in data:
+            for property_id in data[sensor_id]:
+                values.append(Measurement(
+                    m_data=data[sensor_id][property_id],
+                    sensor_item_id=sensor_id,
+                    measurement_source_id=property_id
+                ))
+        query_id = random.randint(0, 10 ** 9)
+        sent_data = MeasurementsInfo(
+            query_id=query_id,
+            insert_ts=datetime.datetime.now(),
+            insert_values=values
+        )
+        send_measurement_data(data_storage_address + '/measurement', sent_data)
 
 
 def repeat_every_5_seconds(callback, task):
@@ -128,3 +150,14 @@ def create_sensors_from_response(items: List[SensorInfo]) -> Dict[int, Sensor]:
         else:
             print(f"Unknown sensor type: {item['type']}")
     return sensors
+
+
+def send_measurement_data(url: str, data: MeasurementsInfo):
+    try:
+        headers = {'Content-Type': 'application/json'}
+
+        response = requests.post(url, data=json.dumps(data), headers=headers)
+        print(f'Status Code: {response.status_code}')
+        print(f'Response Body: {response.json()}')
+    except requests.exceptions.RequestException as err:
+        print(f"Oops: Something: {err}")
