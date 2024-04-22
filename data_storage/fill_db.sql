@@ -4,14 +4,12 @@ USE digital_twin_database;
 # Информация о моделях сенсоров
 INSERT INTO sensor (name, description)
 VALUES ('Терморегулятор ESM', 'Поддерживает подключение термопары и нагревателя\\охладителя'),
-       ('Реле а345', 'Поддерживает подключение по modbus'),
-       ('Другой датчик для примера', 'просто пример');
+       ('Реле а345', 'Поддерживает подключение по modbus');
 
 # Информация о конкретных установленных датчиках
 INSERT INTO sensor_item (sensor_id, is_active, sensor_type)
 VALUES (1, TRUE, 'modbus'),
-       (2, FALSE, 'random'),
-       (3, TRUE, 'random');
+       (2, FALSE, 'random');
 
 # Информация о месте получения данных
 INSERT INTO measurement_source (name, units, description)
@@ -28,4 +26,4 @@ VALUES (1, null, 'address', '1'),
 # Информация о том, какие конкретные данные получает один конкретный датчик
 INSERT INTO sensor_source_mapping
 VALUES (1, 1),
-       (2, 3);
+       (2, 2);
