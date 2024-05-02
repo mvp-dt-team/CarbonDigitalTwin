@@ -15,6 +15,8 @@ import logging
 
 import json
 import random
+import requests
+import io
 
 
 WEIGHTS_DEFECTS = {
@@ -99,23 +101,34 @@ class Handler:
         else:
             return {}
 
-    # Пока записываем в тестовую
+    # endpoint: curl -X POST http://storage-module-address/camera/123 -H "Content-Type: application/json" -d '{"value": 12.34}
     def write_db_request(self, source_id: int, prediction: float) -> int:
         try:
-            conn = sqlite3.connect('data.db')
-            cursor = conn.cursor()
-
-            cursor.execute('''
-                INSERT INTO predictions (source_id, prediction) VALUES (?, ?)
-            ''', (source_id, prediction))
-
-            conn.commit()
-            conn.close()
-            return 0
+            response = requests.post(url=f'http://storage-module-address/camera/{source_id}', json={"value", prediction})
+            if response.ok:
+                return 0
+            else:
+                raise Exception(f"Ошибка передачи значений в БД: {response.status_code}")
         except Exception as e:
-            print(f"Error writing to database: {e}")
-            return 0
-        
+            print(f"{e}")
+            return 1
+
+    # endpoint: curl -X POST http://storage-module-address/camera/123/archivate -F "image=@/path/to/your/image.jpg"
+    def archiving_images(self, source_id: int, image: Image):
+        try:
+            image_buffer = io.BytesIO()
+            image.save(image_buffer, format='JPEG')
+            image_buffer.seek(0)
+
+            response = requests.post(url=f'http://storage-module-address/camera/{source_id}/archivate', data=image_buffer.read(), headers={'Content-Type': 'image/jpeg'})
+            if response.ok:
+                print("Изображение успешно отправлено.")
+                return 0
+            else:
+                raise Exception(f"Ошибка передачи изображения в БД: {response.status_code}")
+        except Exception as e:
+            print(f"{e}")
+            return 1
     def processing_values(self, defects: List[dict]):
         if len(defects) == 0:
             return 0
@@ -150,10 +163,9 @@ class Handler:
     def stop(self):
         self.running = False
 class Source:
-    def __init__(self, id, unit, number, address):
+    def __init__(self, id, description, address):
         self.id = id
-        self.unit = unit
-        self.number = number
+        self.description = description
         self.address = address
 
     def get_value(self) -> Image:
@@ -174,7 +186,6 @@ class Source:
 
 class Model:
     def __init__(self, version: str, path: str):
-        self.version = version
         self.path = path
     
     def predict(self, frame: Image) -> Tensor:
