@@ -4,3 +4,4 @@ diagnostic_modul/sensor-module/__pycache__
 .coverage
 diagnostic_modul/sensor-module/assets
 report.html
+venv
