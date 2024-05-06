@@ -47,3 +47,9 @@ tzdata==2024.1
 ultralytics==8.1.35
 unittest-xml-reporting==3.2.0
 urllib3==2.2.1
+fastapi~=0.109.2
+pymodbus~=3.6.3
+mysql~=0.0.3
+mysql-connector-python~=8.3.0
+pydantic~=2.6.0
+uvicorn~=0.27.1
