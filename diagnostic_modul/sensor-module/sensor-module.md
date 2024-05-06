@@ -26,9 +26,9 @@
 8. Функция остановки работы модуля ```def stop(self) -> None```
 
 - Формат словаря, отправляемый моделью (результат работы): {source_id(int): result(float)}
-- Эндпоинт rest api для отправки результата в модуль хранения: POST http://storage-module-address/camera/<camera_id> -H "Content-Type: application/json" -d '{"value": 12.34}
+- Эндпоинт rest api для отправки результата в модуль хранения: ```POST http://storage-module-address/camera/<camera_id> -H "Content-Type: application/json" -d '{"value": 12.34}```
 - Формат словаря при опросе сенсоров: {source_id(int): image(PIL.Image)}
-- Эндпоинт rest api для отправки изображения в модуль хранения: POST http://storage-module-address/camera/<camera_id>/archivate -F "image=@/path/to/your/image.jpg"
+- Эндпоинт rest api для отправки изображения в модуль хранения: ```POST http://storage-module-address/camera/<camera_id>/archivate -F "image=@/path/to/your/image.jpg"```
 
 ### Source
 
