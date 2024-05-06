@@ -12,9 +12,9 @@ uvicorn data_storage_module:app --reload --port 3000
 ## Диаграмма UML
 Ознакомьтесь с архитектурой модуля, просмотрев диаграмму UML:
 
-![UML Диаграмма модуля хранения](uml_storage_module.png)
+![UML Диаграмма модуля хранения](docs/uml_storage_module.png)
 
 ## ER-диаграмма
 Для понимания структуры базы данных модуля смотрите ER-диаграмму:
 
-![ER Диаграмма](ER_diagram.png)
+![ER Диаграмма](docs/ER_diagram.png)

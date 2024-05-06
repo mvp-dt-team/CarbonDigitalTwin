@@ -20,12 +20,6 @@ storage = MySQLStorage(mysql_host, mysql_password, mysql_user, mysql_database)
 app = FastAPI()
 
 
-@app.get("/sensor", response_model=List[SensorInfo])
-async def get_sensors(active: bool = Query(None, description="Filter sensors by their active state")) \
-        -> List[SensorInfo]:
-    return storage.get_sensors_info(active)
-
-
 @app.get("/measurement_source")
 async def get_measurement_sources() -> List[MeasurementSourceInfo]:
     return storage.get_measurement_sources()
@@ -34,6 +28,16 @@ async def get_measurement_sources() -> List[MeasurementSourceInfo]:
 @app.post("/measurement_source")
 async def add_measurement_source(source: MeasurementSourceInfo):
     storage.add_measurement_source(source)
+
+
+@app.get("/sensor", response_model=List[SensorInfo])
+async def get_sensors(active: bool = Query(None, description="Filter sensors by their active state")) \
+        -> List[SensorInfo]:
+    return storage.get_sensors_info(active)
+
+@app.post("/sensor")
+async def add_sensor(sensor: SensorInfo):
+    storage.add_sensor(sensor)
 
 
 @app.get("/sensor_model")
@@ -54,11 +58,6 @@ async def enable_sensor(sensor_item_id: int):
 @app.patch("/sensors/{sensor_item_id}/disable")
 async def disable_sensor(sensor_item_id: int):
     storage.toggle_sensor_activation(sensor_item_id, False)
-
-
-@app.post("/sensor")
-async def add_sensor(sensor: SensorInfo):
-    storage.add_sensor(sensor)
 
 
 @app.post("/measurement")

@@ -1,5 +1,5 @@
-from sensors_module.modbus.modbus_rtu_client import ModbusRTUClient
-from sensors_module.modbus.modbus_sensor import ModbusSensor
+from sensors_module.sensors.modbus_sensor.rtu_client import ModbusRTUClient
+from sensors_module.sensors.modbus_sensor.sensor import ModbusSensor
 from data_storage.mysql_storage import MySQLStorage
 
 # Настройки COM-порта

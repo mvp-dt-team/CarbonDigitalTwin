@@ -73,7 +73,7 @@
       }
     ]    
     ```
-  - ```curl -X GET http://localhost:3000/sensors_by_source?id=1```
+  - ```curl -X GET http://storage-module-address/sensors_by_source?id=1```
     ```json
     [
       {
@@ -92,7 +92,7 @@
     ```
 - Запрос на получения данных будет выглядеть так:
     ```shell
-    curl -X POST http://localhost:3000/measurement_data \
+    curl -X POST http://storage-module-address/measurement_data \
     -H "Content-Type: application/json" \
     -d '{
       "measurements": [

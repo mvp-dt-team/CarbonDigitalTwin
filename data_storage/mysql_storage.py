@@ -1,14 +1,10 @@
-import time
 from datetime import datetime
 from typing import List
-from uuid import uuid4
 from mysql.connector import connect
 
 from network_models.measurement_source_info import MeasurementSourceInfo
 from network_models.measurements_info import Measurement
 from network_models.sensor_model_info import SensorModelInfo
-from sensors_module.property import Property
-from sensors_module.sensor import Sensor
 from network_models.sensors_info import SensorInfo, SensorProperty
 
 

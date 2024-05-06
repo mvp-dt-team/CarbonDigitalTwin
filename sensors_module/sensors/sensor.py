@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Tuple, Callable
 
 from network_models.sensors_info import SensorInfo
-from sensors_module.property import Property
+from sensors_module.sensors.property import Property
 
 
 class Sensor(ABC):
