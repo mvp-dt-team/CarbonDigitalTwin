@@ -1,11 +1,11 @@
 from typing import Any, Dict, Tuple, Callable
-from sensors_module.modbus.modbus_rtu_client import ModbusRTUClient
-from sensors_module.sensor import Sensor
-from sensors_module.modbus.modbus_property import ModbusProperty, RegisterLocation, \
+from sensors_module.sensors.modbus_sensor.rtu_client import ModbusRTUClient
+from sensors_module.sensors.sensor import Sensor
+from sensors_module.sensors.modbus_sensor.property import ModbusProperty, RegisterLocation, \
     modbus_data_type_from_str
 from pymodbus.exceptions import ModbusIOException
 
-from sensors_module.unit import get_unit_from_str
+from sensors_module.sensors.unit import get_unit_from_str
 from network_models.sensors_info import SensorInfo
 
 

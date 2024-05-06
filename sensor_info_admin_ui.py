@@ -1,5 +1,4 @@
 import requests
-from pydantic import BaseModel
 import json
 
 from network_models.measurement_source_info import MeasurementSourceInfo
