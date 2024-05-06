@@ -23,29 +23,8 @@ WEIGHTS_DEFECTS = {
     0: 0.05,
 }
 
-def create_database():
-    try:
-        conn = sqlite3.connect('data.db')
-        cursor = conn.cursor()
-
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS predictions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                source_id INT NOT NULL,
-                prediction REAL NOT NULL,
-                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-
-        conn.commit()
-        conn.close()
-    except Exception as e:
-        return False
-
-    return True
-
 class Handler:
-    def __init__(self):
+    def __init__(self, url):
         self.sources = []
         self.models = []
         self.queue = Queue()
@@ -54,6 +33,8 @@ class Handler:
         self.running = True
         self.logger = logging.getLogger('Submodule')
         self.logger.setLevel(logging.DEBUG)
+        self.url = url
+        self.frequency_archivating = 5
 
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.DEBUG)
@@ -81,18 +62,6 @@ class Handler:
             data[source.id] = source.get_value()
         return data
 
-    # def polling_sensors_async(self) -> None:
-    #     try:
-    #         while True:
-    #             # logger.info('Опрос камеры')
-    #             data = self.polling_sensors()
-    #             self.queue.put(data)
-    #             # logger.debug(self.queue.empty())
-    #             time.sleep(self.polling_interval)
-    #     except Exception as e:
-    #         print(f"Error in polling_sensors_async: {e}")
-    #         sys.exit(1)
-
     def value_predict(self, source_id: int, source_value: Image) -> dict:
         model = self.source_model_mapping.get(source_id)
         if model:
@@ -104,13 +73,13 @@ class Handler:
     # endpoint: curl -X POST http://storage-module-address/camera/123 -H "Content-Type: application/json" -d '{"value": 12.34}
     def write_db_request(self, source_id: int, prediction: float) -> int:
         try:
-            response = requests.post(url=f'http://storage-module-address/camera/{source_id}', json={"value", prediction})
+            response = requests.post(url=f'http://{self.url}/camera/{source_id}', json={"value": str(prediction)})
             if response.ok:
                 return 0
             else:
-                raise Exception(f"Ошибка передачи значений в БД: {response.status_code}")
+                raise Exception(f"{response.status_code}")
         except Exception as e:
-            print(f"{e}")
+            self.logger.error(f"Ошибка передачи значений в БД: {e}")
             return 1
 
     # endpoint: curl -X POST http://storage-module-address/camera/123/archivate -F "image=@/path/to/your/image.jpg"
@@ -119,15 +88,16 @@ class Handler:
             image_buffer = io.BytesIO()
             image.save(image_buffer, format='JPEG')
             image_buffer.seek(0)
+            files = {'image': ('image.jpg', image_buffer, 'image/jpeg')}
+            response = requests.post(url=f'http://{self.url}/camera/{source_id}/archivate', files=files)
 
-            response = requests.post(url=f'http://storage-module-address/camera/{source_id}/archivate', data=image_buffer.read(), headers={'Content-Type': 'image/jpeg'})
             if response.ok:
-                print("Изображение успешно отправлено.")
+                self.logger.info("Изображение успешно отправлено.")
                 return 0
             else:
-                raise Exception(f"Ошибка передачи изображения в БД: {response.status_code}")
+                raise Exception(f"Ошибка передачи изображения в БД: {response.content}  {response.status_code}")
         except Exception as e:
-            print(f"{e}")
+            self.logger.error(f"{e}")
             return 1
     def processing_values(self, defects: List[dict]):
         if len(defects) == 0:
@@ -137,15 +107,14 @@ class Handler:
 
 
     def run(self) -> None:
+        count = 0
         try:
-            # poll_thread = Thread(target=self.polling_sensors_async)
-            # poll_thread.start()
-
             while self.running:
                 data = self.polling_sensors()
                 self.queue.put(data)
                 if not self.queue.empty():
                     data = self.queue.get()
+                    
                     for source_id, source_value in data.items():
                         model_result = self.value_predict(source_id, source_value)
                         if model_result:
@@ -154,10 +123,14 @@ class Handler:
                                 for b in r.boxes:
                                     defects.append({'class_': int(b.cls), 'confidence_': float(b.conf)})
                             self.write_db_request(source_id, self.processing_values(defects))
+                            if count % self.frequency_archivating == 0:
+                                self.archiving_images(source_id=source_id, image=source_value)
+                count += 1
+                if count > self.frequency_archivating:
+                    count = 0
                 time.sleep(self.polling_interval)
         except Exception as e:
             self.logger.error(f"Error in run: {e}")
-            # poll_thread.join()
             sys.exit(1)
     
     def stop(self):
@@ -190,5 +163,5 @@ class Model:
     
     def predict(self, frame: Image) -> Tensor:
         model = YOLO(self.path)
-        results = model(frame)
+        results = model(frame, verbose=False)
         return results

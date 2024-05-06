@@ -1,18 +1,18 @@
-from classes import Handler, Source, Model, create_database
+from classes import Handler, Source, Model
 import os
 import requests
+import json
 
-sources = [
-    Source(id=0, description='source 1 unit 1 number 1', address=os.path.abspath("C:\\Users\\boiko.k.v\\Desktop\\Carbon-Digital-Twin\\diagnostic_modul\\sensor-module\\data\\videos\\test-video.mp4")),
-    Source(id=1, description='source 2 unit 1 number 1', address=os.path.abspath("C:\\Users\\boiko.k.v\\Desktop\\Carbon-Digital-Twin\\diagnostic_modul\\sensor-module\\data\\videos\\test-video.mp4")),
-    Source(id=2, description='source 3 unit 1 number 1', address=os.path.abspath("C:\\Users\\boiko.k.v\\Desktop\\Carbon-Digital-Twin\\diagnostic_modul\\sensor-module\\data\\videos\\test-video.mp4")),
-    Source(id=3, description='source 4 unit 1 number 1', address=os.path.abspath("C:\\Users\\boiko.k.v\\Desktop\\Carbon-Digital-Twin\\diagnostic_modul\\sensor-module\\data\\videos\\test-video.mp4"))
-]
+sources = []
 
-getting_sources = requests.get('http://storage-module-address/camera')
+url = 'localhost:5000'
+
+getting_sources = requests.get(f'http://{url}/camera')
 if getting_sources.ok:
-    for camera in getting_sources:
-        sources.append(Source(id=camera['id'], address=camera['ip'], description=camera['description']))
+    sources_json = json.loads(getting_sources.text)
+    for camera in sources_json:
+        print(camera)
+        sources.append(Source(id=int(camera['id']), address=camera['ip'], description=camera['description']))
 else:
     raise ConnectionError('Нет подключения к серверу')
 
@@ -21,17 +21,16 @@ print(os.path.abspath('./data/videos/test-video-1.mp4'))
 models = {}
 
 for camera in sources:
-    getting_model = requests.get(f'http://storage-module-address/camera/{camera.id}/model')
+    getting_model = requests.get(f'http://{url}/camera/{camera.id}/model')
     if getting_model.ok:
-        with open(f'model_{camera.id}', 'wb') as f:
+        with open(f'model_{camera.id}.pt', 'wb') as f:
             f.write(getting_model.content)
-        models[camera.id] = Model(path=os.path.abspath(f'model_{camera.id}'))
+        models[camera.id] = Model(path=os.path.abspath(f'model_{camera.id}.pt'), version='0.0.1')
         print("Модель сохранена успешно.")
     else:
         print("Ошибка при получении модели:", getting_model.status_code)
 
-create_database()
-test_handler = Handler()
+test_handler = Handler(url=url)
 # Необходимо реализорвать через конфиг файл
 test_handler.polling_interval = 2
 
