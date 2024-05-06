@@ -2,9 +2,9 @@ import random
 from typing import Any, Dict, Tuple, Callable
 
 from network_models.sensors_info import SensorInfo
-from sensors_module.property import Property
-from sensors_module.sensor import Sensor
-from sensors_module.unit import Unit, get_unit_from_str
+from sensors_module.sensors.property import Property
+from sensors_module.sensors.sensor import Sensor
+from sensors_module.sensors.unit import Unit, get_unit_from_str
 
 
 class RandomSensor(Sensor):

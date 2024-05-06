@@ -8,11 +8,11 @@ import requests
 
 from network_models.measurements_info import MeasurementsInfo, Measurement
 from network_models.sensors_info import SensorInfo
-from sensors_module.modbus.modbus_sensor import ModbusSensor
-from sensors_module.property import Property
-from sensors_module.random_sensor.random_sensor import RandomSensor
-from sensors_module.sensor import Sensor
-from sensors_module.unit import Unit
+from sensors_module.sensors.modbus_sensor.sensor import ModbusSensor
+from sensors_module.sensors.property import Property
+from sensors_module.sensors.random_sensor.sensor import RandomSensor
+from sensors_module.sensors.sensor import Sensor
+from sensors_module.sensors.unit import Unit
 
 data_storage_address = 'http://localhost:3000'
 continue_running = True
@@ -29,7 +29,7 @@ class SensorsModule:
             sensor_data = fetch_sensor_data(url)
 
             if sensor_data:
-                process_sensor_data(sensor_data)
+                print_sensor_data(sensor_data)
                 self.sensors = create_sensors_from_response(sensor_data)
         else:
             self.sensors = {
@@ -99,7 +99,6 @@ class SensorsModule:
 def repeat_every_5_seconds(callback, task):
     global continue_running
     while continue_running:
-        print("task is running")
         callback(task())
         sleep(5)
 
@@ -121,8 +120,7 @@ def fetch_sensor_data(url: str) -> List[Any]:
     return []
 
 
-def process_sensor_data(sensor_data: List[Any]):
-    # Простая обработка: печатаем информацию о каждом сенсоре
+def print_sensor_data(sensor_data: List[Any]):
     for sensor in sensor_data:
         print(f"Sensor ID: {sensor['id']}")
         print(f"Sensor Type: {sensor['type']}")
@@ -141,7 +139,7 @@ def process_sensor_data(sensor_data: List[Any]):
 def create_sensors_from_response(items: List[SensorInfo]) -> Dict[int, Sensor]:
     sensors = {}
     for item in items:
-        if item['type'] == "modbus":
+        if item['type'] == "modbus_sensor":
             sensor = ModbusSensor.from_network(item)
             sensors[sensor.id] = sensor
         elif item['type'] == "random":
@@ -160,4 +158,4 @@ def send_measurement_data(url: str, data: MeasurementsInfo):
         print(f'Status Code: {response.status_code}')
         print(f'Response Body: {response.json()}')
     except requests.exceptions.RequestException as err:
-        print(f"Oops: Something: {err}")
+        print(f"Something went wrong: {err}")

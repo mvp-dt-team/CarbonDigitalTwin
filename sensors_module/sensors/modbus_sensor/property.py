@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from sensors_module.property import Property
+from sensors_module.sensors.property import Property
 
 
 class RegisterLocation(Enum):

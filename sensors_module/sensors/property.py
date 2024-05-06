@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from sensors_module.unit import Unit
+from sensors_module.sensors.unit import Unit
 
 
 @dataclass

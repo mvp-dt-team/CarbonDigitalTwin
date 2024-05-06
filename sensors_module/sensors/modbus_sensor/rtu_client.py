@@ -1,4 +1,4 @@
-from sensors_module.connection import Connection
+from sensors_module.sensors.connection import Connection
 import pymodbus.client as ModbusClient
 
 
