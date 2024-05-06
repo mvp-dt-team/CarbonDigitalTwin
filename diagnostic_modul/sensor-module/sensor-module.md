@@ -1,5 +1,7 @@
 # Модуль компьютерного зрения
 
+Периодический сбор изображений со всех добавленных камер и дальнейшая обработка с передачей результатов работы в модуль хранения.
+
 ## Сущности проекта
 
 ### Handler
@@ -16,11 +18,11 @@
 9. frequency_archivating: int
 
 #### Функционал
-1. Связывание модели с камерой ```add_source_model_mapping(self, source, model) -> None```. Связка заносится в переменную ```source_model_mapping```
+1. Связывание модели с камерой ```add_source_model_mapping(self, source: Source, model: Model) -> None```. Связка заносится в переменную ```source_model_mapping```
 2. Опрос датчиков для получения изображения с камеры ```polling_sensors(self) -> dict```
-3. Получение результат предсказания модели по переданному изображению ```value_predict(self, source_id: int, source_value: Image) -> dict```
+3. Получение результат предсказания модели по переданному изображению ```value_predict(self, source_id: int, source_value: PIL.Image) -> dict```
 4. Отправка данных в модуль хранения данных ```write_db_request(self, source_id: int, prediction: float) -> int```, возвращает код ошибки (0 - успех, 1 - ошибка).
-5. Отправка изображение в модуль хранения данных ```archiving_images(self, source_id: int, image: Image) -> int```, возвращает код ошибки (0 - успех, 1 - ошибка).
+5. Отправка изображение в модуль хранения данных ```archiving_images(self, source_id: int, image: PIL.Image) -> int```, возвращает код ошибки (0 - успех, 1 - ошибка).
 6. Вычисление показателя дефектности по результатам прогноза ```processing_values(self, defects: List[dict]) -> float```
 7. Основаная функция работы модуля ```def run(self) -> None```
 8. Функция остановки работы модуля ```def stop(self) -> None```
@@ -45,4 +47,4 @@
 1. path: str
 
 #### Функционал
-1. Прогноз модели по изображению ```predict(self, frame: Image) -> Tensor```
+1. Прогноз модели по изображению ```predict(self, frame: PIL.Image) -> Tensor```
