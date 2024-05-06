@@ -16,7 +16,7 @@
 9. frequency_archivating: int
 
 #### Функционал
-1. Связывание модели с камерой ```add_source_model_mapping(self, source, model) -> None```. связка заносится в переменную ```source_model_mapping```
+1. Связывание модели с камерой ```add_source_model_mapping(self, source, model) -> None```. Связка заносится в переменную ```source_model_mapping```
 2. Опрос датчиков для получения изображения с камеры ```polling_sensors(self) -> dict```
 3. Получение результат предсказания модели по переданному изображению ```value_predict(self, source_id: int, source_value: Image) -> dict```
 4. Отправка данных в модуль хранения данных ```write_db_request(self, source_id: int, prediction: float) -> int```, возвращает код ошибки (0 - успех, 1 - ошибка).
@@ -26,9 +26,9 @@
 8. Функция остановки работы модуля ```def stop(self) -> None```
 
 - Формат словаря, отправляемый моделью (результат работы): {source_id(int): result(float)}
-- Эндпоинт rest api для отправки результата в модуль хранения: POST http://storage-module-address/camera/\<camera_id\> -H "Content-Type: application/json" -d '{"value": 12.34}
+- Эндпоинт rest api для отправки результата в модуль хранения: POST http://storage-module-address/camera/<camera_id> -H "Content-Type: application/json" -d '{"value": 12.34}
 - Формат словаря при опросе сенсоров: {source_id(int): image(PIL.Image)}
-- Эндпоинт rest api для отправки изображения в модуль хранения: POST http://storage-module-address/camera/\<camera_id\>/archivate -F "image=@/path/to/your/image.jpg"
+- Эндпоинт rest api для отправки изображения в модуль хранения: POST http://storage-module-address/camera/<camera_id>/archivate -F "image=@/path/to/your/image.jpg"
 
 ### Source
 
