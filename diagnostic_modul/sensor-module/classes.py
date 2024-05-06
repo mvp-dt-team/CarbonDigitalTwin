@@ -22,6 +22,7 @@ import io
 WEIGHTS_DEFECTS = {
     0: 0.05,
 }
+MAX_RESULT = 1.0
 
 class Handler:
     def __init__(self, url):
@@ -47,7 +48,7 @@ class Handler:
 
 
 
-    def add_source_model_mapping(self, source, model):
+    def add_source_model_mapping(self, source, model) -> None:
         if type(source) is Source and type(model) is Model:
             self.sources.append(source)
             self.models.append(model)
@@ -55,7 +56,7 @@ class Handler:
         else:
             raise Exception("Модель или источник некорректны")
 
-    def polling_sensors(self) -> int:
+    def polling_sensors(self) -> dict:
         data = {}
         for source in self.sources:
             self.logger.debug(f'Получаю данные с камеры {source.id}')
@@ -83,7 +84,7 @@ class Handler:
             return 1
 
     # endpoint: curl -X POST http://storage-module-address/camera/123/archivate -F "image=@/path/to/your/image.jpg"
-    def archiving_images(self, source_id: int, image: Image):
+    def archiving_images(self, source_id: int, image: Image) -> int:
         try:
             image_buffer = io.BytesIO()
             image.save(image_buffer, format='JPEG')
@@ -99,9 +100,9 @@ class Handler:
         except Exception as e:
             self.logger.error(f"{e}")
             return 1
-    def processing_values(self, defects: List[dict]):
+    def processing_values(self, defects: List[dict]) -> float:
         if len(defects) == 0:
-            return 0
+            return MAX_RESULT
         else:
             return np.mean([WEIGHTS_DEFECTS[x['class_']] * x['confidence_'] for x in defects])
 
@@ -133,8 +134,9 @@ class Handler:
             self.logger.error(f"Error in run: {e}")
             sys.exit(1)
     
-    def stop(self):
+    def stop(self) -> None:
         self.running = False
+
 class Source:
     def __init__(self, id, description, address):
         self.id = id
@@ -158,7 +160,7 @@ class Source:
         return data
 
 class Model:
-    def __init__(self, version: str, path: str):
+    def __init__(self, path: str):
         self.path = path
     
     def predict(self, frame: Image) -> Tensor:
