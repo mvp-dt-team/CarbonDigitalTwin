@@ -1,0 +1,66 @@
+@startuml
+
+
+
+interface Sensor {
+  + title: string
+  + id: int
+  + properties: Property[]
+  + read_data(propId: number)
+}
+
+interface Property {
+  + id: string
+  + name: string
+  + unit: Unit
+}
+
+enum Unit {
+  В формате строк
+  m
+  C*
+  kg
+  N
+}
+
+class ModbusSensor extends Sensor {
+  + address: int
+  + connection: COMCClient
+  + set_connection(conn: COMCClient)
+}
+
+class ModbusProperty extends Property {
+  + addres: int
+  + location: ['HOLDING', 'COILS']
+  + type: ['uint, float]
+}
+
+interface Connection {
+  + connect()
+  + disconnect()
+  +is_connected: bool
+}
+
+class COMCClient extends Connection {
+  + port: string
+  + baudrate: int
+  + timeout: int
+  + read_data(prop: ModbusProperty): value
+}
+
+Sensor "1" o-- "Many" Property
+Property --> Unit : measured in
+ModbusSensor --> COMCClient : ask data
+Sensor ..> Connection
+
+interface DataStorageInterface {
+  + write_data(Sensor, Property, value)
+  + get_active_sensors(): AciveSensorsInfo
+}
+
+class StorageModuleConnector extends DataStorageInterface {
+  + host: string
+}
+
+
+@enduml
