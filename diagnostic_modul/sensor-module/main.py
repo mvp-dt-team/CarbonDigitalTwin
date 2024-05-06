@@ -25,7 +25,7 @@ for camera in sources:
     if getting_model.ok:
         with open(f'model_{camera.id}.pt', 'wb') as f:
             f.write(getting_model.content)
-        models[camera.id] = Model(path=os.path.abspath(f'model_{camera.id}.pt'), version='0.0.1')
+        models[camera.id] = Model(path=os.path.abspath(f'model_{camera.id}.pt'))
         print("Модель сохранена успешно.")
     else:
         print("Ошибка при получении модели:", getting_model.status_code)
