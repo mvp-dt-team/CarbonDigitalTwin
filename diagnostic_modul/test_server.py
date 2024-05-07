@@ -47,7 +47,7 @@ def archivate(camera_id):
 
     image_file = request.files['image']
     if image_file.filename == '':
-        return 'No selected fil', 400
+        return 'No selected file', 400
 
     image_file.save(r'C:\Users\boiko.k.v\Desktop\Carbon-Digital-Twin\diagnostic_modul\images-save' + image_file.filename)
 
