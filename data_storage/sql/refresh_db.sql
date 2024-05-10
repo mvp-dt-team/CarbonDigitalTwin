@@ -1,5 +1,3 @@
-
-
 -- Информация о моделях сенсоров
 CREATE TABLE IF NOT EXISTS sensor
 (
@@ -50,7 +48,6 @@ CREATE TABLE IF NOT EXISTS sensor_params
     FOREIGN KEY (sensor_item_id) REFERENCES sensor_item (id),
     FOREIGN KEY (property_id) REFERENCES measurement_source (id)
 );
-
 -- Информация о измерениях, снятых с датчиков
 CREATE TABLE IF NOT EXISTS raw_data
 (

@@ -22,8 +22,10 @@ class RandomSensor(Sensor):
     @classmethod
     def from_network(cls, sensor: SensorInfo) -> 'Sensor':
         properties = {
+
             prop['id']: Property(
                 id=prop['id'],
+
                 name=prop['name'],
                 unit=get_unit_from_str(prop['unit']),
             )

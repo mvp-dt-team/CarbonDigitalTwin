@@ -5,6 +5,7 @@ diagnostic_modul/sensor-module/__pycache__
 diagnostic_modul/sensor-module/assets
 report.html
 venv
+sensors
 .vscode
 *.zip
 .idea
