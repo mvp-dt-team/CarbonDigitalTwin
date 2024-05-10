@@ -9,3 +9,4 @@ sensors
 .vscode
 *.zip
 .idea
+.venv
