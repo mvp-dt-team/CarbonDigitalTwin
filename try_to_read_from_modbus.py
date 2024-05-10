@@ -1,4 +1,3 @@
-import serial
 import pymodbus.client as ModbusClient
 from pymodbus.exceptions import ModbusIOException
 import logging

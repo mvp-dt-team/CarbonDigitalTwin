@@ -22,8 +22,8 @@ class RandomSensor(Sensor):
     @classmethod
     def from_network(cls, sensor: SensorInfo) -> 'Sensor':
         properties = {
-            prop['id']: Property(
-                id=prop['id'],
+            prop['measurement_source_id']: Property(
+                id=prop['measurement_source_id'],
                 name=prop['name'],
                 unit=get_unit_from_str(prop['unit']),
             )
@@ -43,4 +43,6 @@ class RandomSensor(Sensor):
             return random.uniform(-1, 100)
         if prop.unit == Unit.TOGGLER:
             return random.choice([0, 1])
+        if prop.unit == Unit.PASCAL:
+            return random.uniform(-100, 0)
         raise Exception("Unit not supported")

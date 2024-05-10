@@ -23,32 +23,24 @@ class SensorsModule:
     asker = None
 
     def __init__(self):
-        from_db = False
-        if from_db:
-            url = data_storage_address + '/sensor?active=true'
-            sensor_data = fetch_sensor_data(url)
-
-            if sensor_data:
-                print_sensor_data(sensor_data)
-                self.sensors = create_sensors_from_response(sensor_data)
-        else:
-            self.sensors = {
-                1: RandomSensor("Терморегулятор в промывочной ванне", 1, {
-                    1: Property(1, "Температура в ванне", Unit.CELSIUS),
-                    2: Property(2, "Состояние нагревателя", Unit.TOGGLER)
-                }),
-                2: RandomSensor("Термопара", 2, {
-                    3: Property(3, "У входа в фильеру", Unit.CELSIUS),
-                    4: Property(4, "У выхода", Unit.CELSIUS),
-                    5: Property(5, "В центре", Unit.CELSIUS)
-                })
-            }
-
+        url = data_storage_address + '/sensor?active=true'
+        sensor_data = fetch_sensor_data(url)
+        print(sensor_data)
+        self.sensors = {}
+        if sensor_data:
+            print_sensor_data(sensor_data)
+            self.sensors = create_sensors_from_response(sensor_data)
         print("module inited")
 
     def start(self, callback):
         print("module starting")
-        self.asker = threading.Thread(target=lambda: repeat_every_5_seconds(callback, self.read_sensors_verbose))
+
+        def new_callback(data: dict[int, dict[int, Any]]):
+            send_data_to_storage(data)
+            verbose = self.made_measurement_verbose(data)
+            callback(verbose)
+
+        self.asker = threading.Thread(target=lambda: repeat_every_5_seconds(new_callback, self.read_sensors))
         print("thread started")
         self.asker.start()
         print("module started")
@@ -68,32 +60,13 @@ class SensorsModule:
             results[sensor_id] = sensor.read_all_properties()
         return results
 
-    def read_sensors_verbose(self):
-        print("reading sensors verbose")
+    def made_measurement_verbose(self, data: dict[int, dict[int, Any]]) -> dict[str, dict[str, Any]]:
+        print("made sensors verbose")
         results = {}
-        for sensor_id in self.sensors:
-            sensor = self.sensors[sensor_id]
-            p_data = sensor.read_all_properties()
-            results[sensor.title] = {sensor.properties[p].name: p_data[p] for p in p_data}
-        return results
-
-    def send_data_to_storage(self, data: dict[int, dict[int, Any]]):
-        print("sending data to storage")
-        values = []
         for sensor_id in data:
-            for property_id in data[sensor_id]:
-                values.append(Measurement(
-                    m_data=data[sensor_id][property_id],
-                    sensor_item_id=sensor_id,
-                    measurement_source_id=property_id
-                ))
-        query_id = random.randint(0, 10 ** 9)
-        sent_data = MeasurementsInfo(
-            query_id=query_id,
-            insert_ts=datetime.datetime.now(),
-            insert_values=values
-        )
-        send_measurement_data(data_storage_address + '/measurement', sent_data)
+            sensor = self.sensors[sensor_id]
+            results[sensor.title] = {sensor.properties[p].name: data[sensor_id][p] for p in data[sensor_id]}
+        return results
 
 
 def repeat_every_5_seconds(callback, task):
@@ -129,7 +102,7 @@ def print_sensor_data(sensor_data: List[Any]):
             print(f" - {param_name}: {param_value}")
         print("Properties:")
         for prop in sensor['properties']:
-            print(f" - Property ID: {prop['id']}, Unit: {prop['unit']}, Name: {prop['name']}")
+            print(f" - Property ID: {prop['measurement_source_id']}, Unit: {prop['unit']}, Name: {prop['name']}")
             print(f" - - Prop parameters:")
             for param_name, param_value in prop['parameters'].items():
                 print(f" - - - {param_name}: {param_value}")
@@ -154,8 +127,28 @@ def send_measurement_data(url: str, data: MeasurementsInfo):
     try:
         headers = {'Content-Type': 'application/json'}
 
-        response = requests.post(url, data=json.dumps(data), headers=headers)
+        response = requests.post(url, data=data.model_dump_json(), headers=headers)
         print(f'Status Code: {response.status_code}')
         print(f'Response Body: {response.json()}')
     except requests.exceptions.RequestException as err:
         print(f"Something went wrong: {err}")
+
+
+def send_data_to_storage(data: dict[int, dict[int, Any]]):
+    print("sending data to storage")
+    values = []
+    for sensor_id in data:
+        for property_id in data[sensor_id]:
+            values.append(Measurement(
+                m_data=data[sensor_id][property_id],
+                sensor_item_id=sensor_id,
+                measurement_source_id=property_id
+            ))
+    query_id = random.randint(0, 10 ** 9)  # todo: add retries on conflict
+    sent_data = MeasurementsInfo(
+        query_id=query_id,
+        insert_ts=datetime.datetime.now(),
+        insert_values=values
+    )
+    print(sent_data)
+    send_measurement_data(data_storage_address + '/measurement', sent_data)

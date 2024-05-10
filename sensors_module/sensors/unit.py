@@ -13,3 +13,5 @@ def get_unit_from_str(unit_str: str) -> Unit:
         return Unit.CELSIUS
     if unit_str == "Включен/выключен":
         return Unit.TOGGLER
+    if unit_str == "Паскаль":
+        return Unit.PASCAL
