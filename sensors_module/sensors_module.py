@@ -9,6 +9,7 @@ import requests
 from network_models.measurements_info import MeasurementsInfo, Measurement
 from network_models.sensors_info import SensorInfo
 from sensors_module.sensors.modbus_sensor.sensor import ModbusSensor
+from sensors_module.sensors.modbus_sensor.tcp_client import ModbusTCPClient
 from sensors_module.sensors.property import Property
 from sensors_module.sensors.random_sensor.sensor import RandomSensor
 from sensors_module.sensors.sensor import Sensor
@@ -24,12 +25,19 @@ class SensorsModule:
 
     def __init__(self):
         url = data_storage_address + '/sensor?active=true'
-        sensor_data = fetch_sensor_data(url)
+        sensor_data = fetch_sensor_data(url) # cделать обработку ошибкок и вообще мне не нравится эта функция
         print(sensor_data)
         self.sensors = {}
         if sensor_data:
             print_sensor_data(sensor_data)
             self.sensors = create_sensors_from_response(sensor_data)
+        conn = ModbusTCPClient('192.168.0.1')
+        conn.connect()
+        for key in self.sensors:
+            s = self.sensors[key]
+            if isinstance(s, ModbusSensor):
+                print(s.id, "connection set")
+                s.set_connection(conn)
         print("module inited")
 
     def start(self, callback):
@@ -112,7 +120,7 @@ def print_sensor_data(sensor_data: List[Any]):
 def create_sensors_from_response(items: List[SensorInfo]) -> Dict[int, Sensor]:
     sensors = {}
     for item in items:
-        if item['type'] == "modbus_sensor":
+        if item['type'] == "modbus":
             sensor = ModbusSensor.from_network(item)
             sensors[sensor.id] = sensor
         elif item['type'] == "random":

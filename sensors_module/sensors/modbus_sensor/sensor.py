@@ -1,5 +1,6 @@
 from typing import Any, Dict, Tuple, Callable
 from sensors_module.sensors.modbus_sensor.rtu_client import ModbusRTUClient
+from sensors_module.sensors.modbus_sensor.tcp_client import ModbusTCPClient
 from sensors_module.sensors.sensor import Sensor
 from sensors_module.sensors.modbus_sensor.property import ModbusProperty, RegisterLocation, \
     modbus_data_type_from_str
@@ -42,8 +43,8 @@ class ModbusSensor(Sensor):
         address = int(sensor['parameters'].get("address", 0))
 
         properties = {
-            prop['id']: ModbusProperty(
-                id=prop['id'],
+            prop['measurement_source_id']: ModbusProperty(
+                id=prop['measurement_source_id'],
                 name=prop['name'],
                 unit=get_unit_from_str(prop['unit']),
                 address=int(prop['parameters'].get("register", 0)),
@@ -55,38 +56,39 @@ class ModbusSensor(Sensor):
 
         return cls(sensor['type'], sensor['id'], properties, address)
 
-    def set_connection(self, connection: ModbusRTUClient):
+    def set_connection(self, connection: ModbusRTUClient or ModbusTCPClient) -> None:
         self.connection = connection
+        print(self.connection, "set conn", self)
 
     def __str__(self):
         return (self.title + '(m_addr: ' + str(self.address) + ')' if self.address is not None else self.title) + str(
             self.properties)
 
     def read_property_data(self, property_id: int) -> Any:
-        if self.connection.is_connected() and self.connection.modbus_client is not None:
-            try:
-                client = self.connection.modbus_client
-                prop = self.properties[property_id]
-                if not isinstance(prop, ModbusProperty):
-                    raise TypeError("Ожидается поле типа ModbusProperty")
-                modbus_response = None
-                if prop.location == RegisterLocation.HOLDING_REGISTERS:
-                    modbus_response = client.read_holding_registers(
-                        prop.address, slave=self.address)
+        try:
+            client = self.connection.modbus_client
+            print(self.connection, "client", self.id, self)
+            prop = self.properties[property_id]
+            if not isinstance(prop, ModbusProperty):
+                raise TypeError("Ожидается поле типа ModbusProperty")
+            modbus_response = None
+            if prop.location == RegisterLocation.HOLDING_REGISTERS:
+                modbus_response = client.read_holding_registers(
+                    prop.address, slave=self.address)
 
-                if modbus_response is None:
-                    raise Exception(
-                        f"Данная позиция регистра {str(prop.location)} не поддерживается")
+            if modbus_response is None:
+                raise Exception(
+                    f"Данная позиция регистра {str(prop.location)} не поддерживается")
 
-                if modbus_response.isError():
-                    print("Error reading register!")
-                    print(modbus_response)
-                else:
-                    print(modbus_response.registers)
-                    print("Register value:", modbus_response.registers[0])
-                    return modbus_response.registers[0]
+            if modbus_response.isError():
+                print("Error reading register!")
+                print(modbus_response)
+            else:
+                print(modbus_response.registers)
+                print("Register value:", modbus_response.registers[0])
+                return modbus_response.registers[0]
 
-            except ModbusIOException as modbus_error:
-                print(f"Ошибка Modbus: {modbus_error}")
-            except Exception as e:
-                print(f"Ошибка: {e}")
+        except ModbusIOException as modbus_error:
+            print(f"Ошибка Modbus: {modbus_error}")
+        except Exception as e:
+            print(f"Ошибка: {e}")

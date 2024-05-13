@@ -100,7 +100,7 @@ class MySQLStorage():
             get_active_sensors_query = '''
                     SELECT id, sensor_type, is_active, addition_info, sensor_id
                     FROM sensor_item  
-                    WHERE is_active=%s;
+                    WHERE is_active=True;
                     '''
             get_all_sensors_query = "SELECT id, sensor_type, is_active, addition_info, sensor_id FROM sensor_item"
             cursor.execute(get_active_sensors_query if is_active else get_all_sensors_query)
