@@ -1,3 +1,12 @@
+diagnostic_modul/sensor-module/data
+data.db
+diagnostic_modul/sensor-module/__pycache__
+.coverage
+diagnostic_modul/sensor-module/assets
+report.html
+venv
+sensors
 .vscode
 *.zip
 .idea
+.venv

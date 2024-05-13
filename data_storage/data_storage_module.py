@@ -1,3 +1,4 @@
+from datetime import time
 from typing import List, Annotated
 from fastapi import FastAPI, Query, HTTPException
 from mysql.connector import IntegrityError
@@ -33,7 +34,6 @@ async def add_measurement_source(source: MeasurementSourceInfo):
 async def get_sensors(active: bool = Query(None, description="Filter sensors by their active state")) \
         -> List[SensorInfo]:
     return storage.get_sensors_info(active)
-
 
 @app.post("/sensor")
 async def add_sensor(sensor: SensorInfo):
