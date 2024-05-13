@@ -8,3 +8,9 @@ venv
 .vscode
 *.zip
 .idea
+
+__pycache__
+ML*.csv
+*.csv
+*.png
+*.gif
