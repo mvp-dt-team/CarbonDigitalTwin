@@ -14,7 +14,7 @@ from sensors_module.sensors.random_sensor.sensor import RandomSensor
 from sensors_module.sensors.sensor import Sensor
 from sensors_module.sensors.unit import Unit
 
-data_storage_address = 'http://localhost:3000'
+data_storage_address = 'http://localhost:8000'
 continue_running = True
 
 
@@ -23,7 +23,7 @@ class SensorsModule:
     asker = None
 
     def __init__(self):
-        from_db = False
+        from_db = True #  TODO Изменил на True для проверки на работоспособность соединение с модулем хранения данных
         if from_db:
             url = data_storage_address + '/sensor?active=true'
             sensor_data = fetch_sensor_data(url)
@@ -31,6 +31,8 @@ class SensorsModule:
             if sensor_data:
                 print_sensor_data(sensor_data)
                 self.sensors = create_sensors_from_response(sensor_data)
+            else:
+                print('Датчиков не обнаружено')
         else:
             self.sensors = {
                 1: RandomSensor("Терморегулятор в промывочной ванне", 1, {
@@ -124,15 +126,16 @@ def print_sensor_data(sensor_data: List[Any]):
     for sensor in sensor_data:
         print(f"Sensor ID: {sensor['id']}")
         print(f"Sensor Type: {sensor['type']}")
-        print(f" Sensor parameters:")
-        for param_name, param_value in sensor['parameters'].items():
-            print(f" - {param_name}: {param_value}")
-        print("Properties:")
-        for prop in sensor['properties']:
-            print(f" - Property ID: {prop['id']}, Unit: {prop['unit']}, Name: {prop['name']}")
-            print(f" - - Prop parameters:")
-            for param_name, param_value in prop['parameters'].items():
-                print(f" - - - {param_name}: {param_value}")
+        if sensor['parameters']:
+            print(f" Sensor parameters:")
+            for param_name, param_value in sensor['parameters'].items():
+                print(f" - {param_name}: {param_value}")
+            print("Properties:")
+            for prop in sensor['properties']:
+                print(f" - Property ID: {prop['id']}, Unit: {prop['unit']}, Name: {prop['name']}")
+                print(f" - - Prop parameters:")
+                for param_name, param_value in prop['parameters'].items():
+                    print(f" - - - {param_name}: {param_value}")
         print("---")
 
 

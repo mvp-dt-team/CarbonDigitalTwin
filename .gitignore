@@ -8,3 +8,7 @@ venv
 .vscode
 *.zip
 .idea
+*__pycache__
+*.env
+*.csv
+*.pkl

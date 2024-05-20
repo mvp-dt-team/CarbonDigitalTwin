@@ -4,7 +4,7 @@ import json
 from network_models.measurement_source_info import MeasurementSourceInfo
 from network_models.sensor_model_info import SensorModelInfo
 
-API_BASE_URL = 'http://localhost:3000'
+API_BASE_URL = 'http://localhost:8000'
 
 
 def print_json(data):

@@ -38,12 +38,12 @@ class ModbusSensor(Sensor):
 
     @classmethod
     def from_network(cls, sensor: SensorInfo) -> 'Sensor':
-        # добавить проверку наличия свойств и выдать соответствующие ошибки
+        #  TODO добавить проверку наличия свойств и выдать соответствующие ошибки
         address = int(sensor['parameters'].get("address", 0))
 
         properties = {
             prop['id']: ModbusProperty(
-                id=prop['id'],
+                id=prop['id'], # TODO Нужно ли здесь ID?
                 name=prop['name'],
                 unit=get_unit_from_str(prop['unit']),
                 address=int(prop['parameters'].get("register", 0)),

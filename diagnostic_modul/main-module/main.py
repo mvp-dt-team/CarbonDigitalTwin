@@ -17,7 +17,7 @@ import json
 #             return 1
 
 
-URL = 'localhost:5000'
+URL = 'localhost:8000'
 
 test_handler = Handler(2, URL)
 

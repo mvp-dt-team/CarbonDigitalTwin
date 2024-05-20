@@ -99,7 +99,7 @@ class MySQLStorage():
         with self.mysql_connection.cursor() as cursor:
             get_active_sensors_query = '''
                     SELECT id, sensor_type, is_active, addition_info FROM sensor_item  
-                            WHERE is_active = %s'''
+                            WHERE is_active = true''' # TODO Изменил на True, так как далее в коде никакой параметр не передается, но это и не нужно, раз нам нужно получать все активные датчики
             get_all_sensors_query = "SELECT id, sensor_type, is_active, addition_info FROM sensor_item"
             cursor.execute(get_active_sensors_query if is_active else get_all_sensors_query)
             sensors_data = cursor.fetchall()
@@ -147,20 +147,30 @@ class MySQLStorage():
 
     def add_sensor(self, sensor: SensorInfo):
         with self.mysql_connection.cursor() as cursor:
+
+            # Добавление экземпляра датчика в таблицу
             query = '''INSERT INTO sensor_item (sensor_id, 
                                                 is_active, 
                                                 sensor_type, 
                                                 addition_info) VALUES (%s, %s, %s, %s)'''
             cursor.execute(query, (sensor.sensor_model_id, True, sensor.type, sensor.description))
+            
+            # Получение ID экземпляра датчика из таблицы sensor_item
             sensor_item_id = cursor.lastrowid
+
+            # Связка этого экземпляра с источником измерения
             query = '''INSERT INTO sensor_source_mapping (measurement_source_id, sensor_item_id) 
                         VALUES (%s, %s)'''
             values = [(prop.measurement_source_id, sensor_item_id) for prop in sensor.properties]
             cursor.executemany(query, values)
+
+            # Вставка параметров для датчика
             query = '''INSERT INTO sensor_params (sensor_item_id, property_id, param_name, param_value) 
                         VALUES (%s, %s, %s, %s)'''
             values = [(sensor_item_id, None, param_name, sensor.parameters[param_name])
                       for param_name in sensor.parameters]
+            
+            # Вставка измеряемых свойств для датчика
             for prop in sensor.properties:
                 values.extend([(sensor_item_id, prop.measurement_source_id, param_name, prop.parameters[param_name])
                                for param_name in prop.parameters])
