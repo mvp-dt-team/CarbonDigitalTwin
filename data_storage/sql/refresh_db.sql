@@ -1,7 +1,7 @@
 -- Информация о моделях сенсоров
 CREATE TABLE IF NOT EXISTS sensor
 (
-    id          INT PRIMARY KEY,
+    id          INT PRIMARY KEY AUTO_INCREMENT,
     name        VARCHAR(255) NOT NULL,
     description TEXT
 );
@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS sensor
 -- Информация о месте получения данных
 CREATE TABLE IF NOT EXISTS measurement_source
 (
-    id          INT PRIMARY KEY,
+    id          INT PRIMARY KEY AUTO_INCREMENT,
     name        VARCHAR(255) NOT NULL,
     units       VARCHAR(255) NOT NULL,
     description TEXT
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS measurement_source
 -- Информация о конкретных установленных датчиках
 CREATE TABLE IF NOT EXISTS sensor_item
 (
-    id                INT PRIMARY KEY,
+    id                INT PRIMARY KEY AUTO_INCREMENT,
     sensor_id         INT                                NOT NULL,
     installation_date DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     is_active         BOOLEAN                            NOT NULL,

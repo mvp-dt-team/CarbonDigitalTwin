@@ -95,7 +95,7 @@ class MySQLStorage():
             self.mysql_connection.commit()
             cursor.close()
 
-    def get_sensors_info(self, is_active: bool) -> List[SensorInfo]:
+    def get_sensors_info(self, need_active: bool) -> List[SensorInfo]:
         with self.mysql_connection.cursor() as cursor:
             get_active_sensors_query = '''
                     SELECT id, sensor_type, is_active, addition_info, sensor_id
@@ -103,13 +103,13 @@ class MySQLStorage():
                     WHERE is_active=True;
                     '''
             get_all_sensors_query = "SELECT id, sensor_type, is_active, addition_info, sensor_id FROM sensor_item"
-            cursor.execute(get_active_sensors_query if is_active else get_all_sensors_query)
+            cursor.execute(get_active_sensors_query if need_active else get_all_sensors_query)
             sensors_data = cursor.fetchall()
             sensors: List[SensorInfo] = []
             for raw_sensor in sensors_data:
                 sensor_id = raw_sensor[0]
                 sensor_type = raw_sensor[1]
-                is_active = raw_sensor[2]
+                need_active = raw_sensor[2]
                 addition_info = raw_sensor[3]
                 model_id = raw_sensor[4]
 
@@ -143,7 +143,7 @@ class MySQLStorage():
                                        parameters=property_parameters))
 
                 sensors.append(SensorInfo(id=sensor_id, parameters=sensor_parameters,
-                                          type=sensor_type, properties=props, is_active=is_active,
+                                          type=sensor_type, properties=props, is_active=need_active,
                                           description=addition_info, sensor_model_id=model_id))
             cursor.close()
             return sensors
