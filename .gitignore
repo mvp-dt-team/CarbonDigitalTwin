@@ -14,3 +14,4 @@ ML*.csv
 *.csv
 *.png
 *.gif
+.venv
