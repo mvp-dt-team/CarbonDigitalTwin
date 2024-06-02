@@ -16,6 +16,7 @@ storage = MySQLStorage(mysql_host, mysql_password, mysql_user, mysql_database)
 
 app = FastAPI()
 
+# Temporary Redirect возникает из-за префиксов роутера, возможно, они используются как-то неверно
 app.include_router(get_measurement_sources_router(storage), prefix="/measurement_source")
 app.include_router(get_measurements_router(storage), prefix="/measurement")
 app.include_router(get_sensors_router(storage), prefix="/sensor")

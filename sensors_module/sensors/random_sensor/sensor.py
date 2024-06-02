@@ -1,3 +1,4 @@
+import logging
 import random
 from typing import Any, Dict, Tuple, Callable
 
@@ -6,6 +7,7 @@ from sensors_module.sensors.property import Property
 from sensors_module.sensors.sensor import Sensor
 from sensors_module.sensors.unit import Unit, get_unit_from_str
 
+logger = logging.getLogger('RandomSensor')
 
 class RandomSensor(Sensor):
     @classmethod
@@ -23,8 +25,8 @@ class RandomSensor(Sensor):
     def from_network(cls, sensor: SensorInfo) -> 'Sensor':
         properties = {
 
-            prop['id']: Property(
-                id=prop['id'],
+            prop['measurement_source_id']: Property(
+                id=prop['measurement_source_id'],
 
                 name=prop['name'],
                 unit=get_unit_from_str(prop['unit']),
@@ -35,7 +37,13 @@ class RandomSensor(Sensor):
         return RandomSensor(sensor['id'], sensor['id'], properties)
 
     def read_all_properties(self) -> Dict[int, Any]:
-        return {id: self.read_property_data(id) for id in self.properties}
+        prop_values = {}
+        for prop_id in self.properties:
+            try:
+                prop_values[prop_id] = self.read_property_data(prop_id)
+            except Exception as e:
+                logger.error(e)
+        return prop_values
 
     def read_property_data(self, property_id: int) -> Any:
         prop = self.properties[property_id]

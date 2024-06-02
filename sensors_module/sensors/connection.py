@@ -8,7 +8,7 @@ class Connection(ABC):
         pass
 
     @abstractmethod
-    def connect(self):
+    def connect(self) -> bool:
         pass
 
     @abstractmethod
