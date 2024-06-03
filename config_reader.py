@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     SMPORT: int
 
     # Адрес для подключения по modbus tcp
-    MODBUSTCP: str
+    MODBASTCP: str
     
     # Интервал опроса датчиков
     POLL_INTERVAL: int
@@ -25,4 +25,3 @@ class Settings(BaseSettings):
 
 
 config = Settings()
-print(config)

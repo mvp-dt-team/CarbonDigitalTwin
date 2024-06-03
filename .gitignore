@@ -9,6 +9,7 @@ venv
 *.zip
 .idea
 .env
+*.log
 
 __pycache__
 ML*.csv
