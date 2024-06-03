@@ -1,176 +1,195 @@
 from datetime import datetime
 from typing import List
 from mysql.connector import connect
+from sqlalchemy import create_engine, desc
+from functools import wraps
+from sqlalchemy.orm import sessionmaker, Session
+from data_storage.orm import SensorModel, MeasurementSourceModel, SensorItemModel, SensorSourceMappingModel, SensorParamsModel, RawDataModel, MeasurementModel
 
 from network_models.measurement_source_info import MeasurementSourceInfo
 from network_models.measurements_info import Measurement
 from network_models.sensor_model_info import SensorModelInfo
 from network_models.sensors_info import SensorInfo, SensorProperty
 
+from .config import config
+
+
+def sqlalchemy_session(engine_url):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # Создание соединения с базой данных
+            engine = create_engine(engine_url)
+            Session = sessionmaker(bind=engine)
+            session = Session()
+
+            try:
+                # Вызов функции с передачей сессии в качестве аргумента
+                result = func(*args, session=session, **kwargs)
+                session.commit()  # Фиксация всех изменений в базе данных
+                return result
+            except Exception as e:
+                session.rollback()  # Отмена всех изменений в случае ошибки
+                raise e
+            finally:
+                session.close()  # Закрытие сессии после завершения работы
+
+        return wrapper
+    return decorator
+
 
 class MySQLStorage():
-
+    engine_url = f'mysql+pymysql://develop:aa09dd995C72_5355a598fc7D8ab1230a@195.133.147.52:3306/digital_twin_database'
     def close(self):
         self.mysql_connection.close()
 
-    def __init__(self, host: str, password: str, user: str, database: str) -> None:
-        self.host = host
-        self.password = password
-        self.user = user
-        self.database = database
+    def __init__(self) -> None:
+        pass
+    @sqlalchemy_session(engine_url)
+    def add_measurement(self, measurement: Measurement, query_id: int, insert_ts: datetime, session: Session) -> None:
+            measurement_new = MeasurementModel(
+                query_id=query_id,
+                insert_ts=int(insert_ts.timestamp()),
+                m_data=measurement.m_data,
+                sensor_item_id=measurement.sensor_item_id,
+                measurement_source_id=measurement.measurement_source_id
+            )
+            session.add(measurement_new)
 
-        self.mysql_connection = connect(
-            host=self.host,
-            user=self.user,
-            password=self.password,
-            database=self.database
-        )
-
-    def add_measurement(self, measurement: Measurement, query_id: int, insert_ts: datetime) -> None:
-        with self.mysql_connection.cursor() as cursor:
-            query = ('INSERT INTO measurement (query_id, insert_ts, m_data, sensor_item_id, measurement_source_id) '
-                     'VALUES (%s, %s, %s, %s, %s)')
-            cursor.execute(query, (
-                query_id, int(insert_ts.timestamp()), measurement.m_data, measurement.sensor_item_id,
-                measurement.measurement_source_id))
-            self.mysql_connection.commit()
-            cursor.close()
-
-    def get_last_three_measurements_for_sources(self, measurement_source_ids: List[int]) -> List[Measurement]:
+    @sqlalchemy_session(engine_url)
+    def get_last_three_measurements_for_sources(self, measurement_source_ids: List[int], session: Session) -> List[Measurement]:
         measurements = []
-        with self.mysql_connection.cursor() as cursor:
-            for source_id in measurement_source_ids:
-                query = ('''
-                    SELECT insert_ts, m_data, sensor_item_id, measurement_source_id FROM measurement 
-                    WHERE measurement_source_id = %s 
-                    ORDER BY insert_ts DESC 
-                    LIMIT 3
-                ''')
-                cursor.execute(query, (source_id,))
-                result = cursor.fetchall()
-                measurements.extend(
-                    [Measurement(insert_ts=measurement[0], m_data=measurement[1], sensor_item_id=measurement[2],
-                                 measurement_source_id=measurement[3]) for measurement in result])
+        for source_id in measurement_source_ids:
+            result = session.query(MeasurementModel)\
+                            .filter(MeasurementModel.measurement_source_id == source_id)\
+                            .order_by(desc(MeasurementModel.insert_ts))\
+                            .limit(3)\
+                            .all()
+            result = [Measurement(m_data=result_data.m_data, sensor_item_id=result_data.sensor_item_id, measurement_source_id=result_data.measurement_source_id, insert_ts=result_data.insert_ts) for result_data in result]
+            measurements.extend(result)
         return measurements
 
     # MEASUREMENT SOURCE ########################
 
-    def get_measurement_sources(self) -> List[MeasurementSourceInfo]:
-        with self.mysql_connection.cursor() as cursor:
-            query = '''SELECT id, name, description, units FROM measurement_source'''
-            cursor.execute(query)
-            sources_data = cursor.fetchall()
-            sources: List[MeasurementSourceInfo] = []
-            for raw_info in sources_data:
-                item = MeasurementSourceInfo(id=raw_info[0], name=raw_info[1], description=raw_info[2],
-                                             unit=raw_info[3])
-                sources.append(item)
-            cursor.close()
-            return sources
+    @sqlalchemy_session(engine_url)
+    def get_measurement_sources(self, session: Session) -> List[MeasurementSourceInfo]:
+        sources_data = session.query(MeasurementSourceModel).all()
+        sources = [
+            MeasurementSourceInfo(
+                id=source.id,
+                name=source.name,
+                description=source.description,
+                unit=source.units
+            ) for source in sources_data
+        ]
+        return sources
 
-    def add_measurement_source(self, source: MeasurementSourceInfo) -> None:
-        with self.mysql_connection.cursor() as cursor:
-            query = '''INSERT INTO measurement_source (name, description, units) VALUES (%s, %s, %s)'''
-            cursor.execute(query, (source.name, source.description, source.unit))
-            self.mysql_connection.commit()
-            cursor.close()
+    @sqlalchemy_session(engine_url)
+    def add_measurement_source(self, source: MeasurementSourceInfo, session: Session) -> None:
+        new_source = MeasurementSourceModel(
+            name=source.name,
+            description=source.description,
+            units=source.unit
+        )
+        session.add(new_source)
+
 
     # SENSORS ##############
-    def get_sensors_models(self) -> List[SensorModelInfo]:
-        with self.mysql_connection.cursor() as cursor:
-            query = '''SELECT id, name, description FROM sensor'''
-            cursor.execute(query)
-            models_data = cursor.fetchall()
-            models: List[SensorModelInfo] = []
-            for raw_info in models_data:
-                item = SensorModelInfo(id=raw_info[0], name=raw_info[1], description=raw_info[2])
-                models.append(item)
-            cursor.close()
-            return models
+    @sqlalchemy_session(engine_url)
+    def get_sensors_models(self, session) -> List[SensorModelInfo]:
+        models_data = session.query(SensorModel).all()
+        models = [
+            SensorModelInfo(
+                id=model.id,
+                name=model.name,
+                description=model.description
+            ) for model in models_data
+        ]
+        return models
 
-    def add_sensor_model(self, model: SensorModelInfo) -> None:
-        with self.mysql_connection.cursor() as cursor:
-            query = '''INSERT INTO sensor (name, description) VALUES (%s, %s)'''
-            cursor.execute(query, (model.name, model.description))
-            self.mysql_connection.commit()
-            cursor.close()
+    @sqlalchemy_session(engine_url)
+    def add_sensor_model(self, model: SensorModelInfo, session) -> None:
+        new_model = SensorModel(
+            name=model.name,
+            description=model.description
+        )
+        session.add(new_model)
 
-    def get_sensors_info(self, need_active: bool) -> List[SensorInfo]:
-        with self.mysql_connection.cursor() as cursor:
-            get_active_sensors_query = '''
-                    SELECT id, sensor_type, is_active, addition_info, sensor_id
-                    FROM sensor_item  
-                    WHERE is_active=True;
-                    '''
-            get_all_sensors_query = "SELECT id, sensor_type, is_active, addition_info, sensor_id FROM sensor_item"
-            cursor.execute(get_active_sensors_query if need_active else get_all_sensors_query)
-            sensors_data = cursor.fetchall()
-            sensors: List[SensorInfo] = []
-            for raw_sensor in sensors_data:
-                sensor_id = raw_sensor[0]
-                sensor_type = raw_sensor[1]
-                need_active = raw_sensor[2]
-                addition_info = raw_sensor[3]
-                model_id = raw_sensor[4]
 
-                get_parameters_query = '''
-                                SELECT param_name, param_value, property_id FROM sensor_params 
-                                WHERE sensor_item_id=%s
-                                '''
-                cursor.execute(get_parameters_query, (sensor_id,))
-                parameters = cursor.fetchall()
-                sensor_parameters = {param_name: param_value for param_name, param_value, property_id in parameters if
-                                     property_id is None}
+    @sqlalchemy_session(engine_url)
+    def get_sensors_info(self, need_active: bool, session) -> List[SensorInfo]:
+        query = session.query(SensorItemModel)
+        if need_active:
+            query = query.filter(SensorItemModel.is_active == True)
+        
+        sensors_data = query.all()
+        sensors: List[SensorInfo] = []
 
-                get_properties_query = '''
-                                        SELECT source.id, source.name, source.units FROM measurement_source source 
-                                              JOIN digital_twin_database.sensor_source_mapping ssm 
-                                              ON source.id = ssm.measurement_source_id
-                                              WHERE ssm.sensor_item_id=%s
-                                              '''
-                cursor.execute(get_properties_query, (sensor_id,))
-                raw_properties = cursor.fetchall()
-                props: List[SensorProperty] = []
-                for raw_property in raw_properties:
-                    property_id = raw_property[0]
-                    property_name = raw_property[1]
-                    property_units = raw_property[2]
-                    property_parameters = {param_name: param_value for param_name, param_value, id in
-                                           parameters if
-                                           id == property_id}
-                    props.append(
-                        SensorProperty(measurement_source_id=property_id, name=property_name, unit=property_units,
-                                       parameters=property_parameters))
+        for raw_sensor in sensors_data:
+            sensor_id = raw_sensor.id
+            sensor_type = raw_sensor.sensor_type
+            is_active = raw_sensor.is_active
+            addition_info = raw_sensor.addition_info
+            model_id = raw_sensor.sensor_id
 
-                sensors.append(SensorInfo(id=sensor_id, parameters=sensor_parameters,
-                                          type=sensor_type, properties=props, is_active=need_active,
-                                          description=addition_info, sensor_model_id=model_id))
-            cursor.close()
-            return sensors
+            parameters_query = session.query(SensorParamsModel).filter(SensorParamsModel.sensor_item_id == sensor_id).all()
+            sensor_parameters = {param.param_name: param.param_value for param in parameters_query if param.property_id is None}
 
-    def add_sensor(self, sensor: SensorInfo):
-        with self.mysql_connection.cursor() as cursor:
-            query = '''INSERT INTO sensor_item (sensor_id, 
-                                                is_active, 
-                                                sensor_type, 
-                                                addition_info) VALUES (%s, %s, %s, %s)'''
-            cursor.execute(query, (sensor.sensor_model_id, True, sensor.type, sensor.description))
-            sensor_item_id = cursor.lastrowid
-            query = '''INSERT INTO sensor_source_mapping (measurement_source_id, sensor_item_id) 
-                        VALUES (%s, %s)'''
-            values = [(prop.measurement_source_id, sensor_item_id) for prop in sensor.properties]
-            cursor.executemany(query, values)
-            query = '''INSERT INTO sensor_params (sensor_item_id, property_id, param_name, param_value) 
-                        VALUES (%s, %s, %s, %s)'''
-            values = [(sensor_item_id, None, param_name, sensor.parameters[param_name])
-                      for param_name in sensor.parameters]
-            for prop in sensor.properties:
-                values.extend([(sensor_item_id, prop.measurement_source_id, param_name, prop.parameters[param_name])
-                               for param_name in prop.parameters])
-            cursor.executemany(query, values)
+            properties_query = session.query(MeasurementSourceModel.id, MeasurementSourceModel.name, MeasurementSourceModel.units)\
+                                    .join(SensorSourceMappingModel, MeasurementSourceModel.id == SensorSourceMappingModel.measurement_source_id)\
+                                    .filter(SensorSourceMappingModel.sensor_item_id == sensor_id)\
+                                    .all()
+            
+            props: List[SensorProperty] = []
+            for property_id, property_name, property_units in properties_query:
+                property_parameters = {param.param_name: param.param_value for param in parameters_query if param.property_id == property_id}
+                props.append(SensorProperty(measurement_source_id=property_id, name=property_name, unit=property_units, parameters=property_parameters))
 
-    def toggle_sensor_activation(self, sensor_item_id: int, is_active: bool):
-        with self.mysql_connection.cursor() as cursor:
-            update_query = "UPDATE sensor_item SET is_active = %s WHERE id = %s"
-            cursor.execute(update_query, (is_active, sensor_item_id))
-            self.mysql_connection.commit()
+            sensors.append(SensorInfo(id=sensor_id, parameters=sensor_parameters, type=sensor_type, properties=props, is_active=is_active, description=addition_info, sensor_model_id=model_id))
+        
+        return sensors
+
+
+    @sqlalchemy_session(engine_url)
+    def add_sensor(self, sensor: SensorInfo, session):
+        # Добавляем новый sensor_item
+        new_sensor_item = SensorItemModel(
+            sensor_id=sensor.sensor_model_id,
+            is_active=True,
+            sensor_type=sensor.type,
+            addition_info=sensor.description
+        )
+        session.add(new_sensor_item)
+        session.flush()  # Применяем изменения, чтобы получить id нового sensor_item
+
+        # Добавляем в sensor_source_mapping
+        for prop in sensor.properties:
+            new_sensor_source_mapping = SensorSourceMappingModel(
+                measurement_source_id=prop.measurement_source_id,
+                sensor_item_id=new_sensor_item.id
+            )
+            session.add(new_sensor_source_mapping)
+
+        # Добавляем в sensor_params
+        for param_name, param_value in sensor.parameters.items():
+            new_sensor_param = SensorParamsModel(
+                sensor_item_id=new_sensor_item.id,
+                property_id=None,
+                param_name=param_name,
+                param_value=param_value
+            )
+            session.add(new_sensor_param)
+
+        for prop in sensor.properties:
+            for param_name, param_value in prop.parameters.items():
+                new_sensor_param = SensorParamsModel(
+                    sensor_item_id=new_sensor_item.id,
+                    property_id=prop.measurement_source_id,
+                    param_name=param_name,
+                    param_value=param_value
+                )
+                session.add(new_sensor_param)
+
+    @sqlalchemy_session(engine_url)
+    def toggle_sensor_activation(self, sensor_item_id: int, is_active: bool, session):
+        session.query(SensorItemModel).filter(SensorItemModel.id == sensor_item_id).update({SensorItemModel.is_active: is_active})

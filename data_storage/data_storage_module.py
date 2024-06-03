@@ -7,12 +7,12 @@ from data_storage.routers.sensor_models import get_sensor_models_router
 from data_storage.routers.sensors import get_sensors_router
 
 # Настройки MySQL
-mysql_host = 'localhost'
-mysql_user = 'digital_twin'
-mysql_password = 'digital_twin'
-mysql_database = 'digital_twin_database'
+# mysql_host = 'localhost'
+# mysql_user = 'digital_twin'
+# mysql_password = 'digital_twin'
+# mysql_database = 'digital_twin_database'
 
-storage = MySQLStorage(mysql_host, mysql_password, mysql_user, mysql_database)
+storage = MySQLStorage()
 
 app = FastAPI()
 
