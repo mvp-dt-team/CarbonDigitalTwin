@@ -9,7 +9,7 @@ from sensors_module.storage_client import StorageClient
 
 from config_reader import config
 
-data_storage_address = config.STORAGE_MODULE_ADDRESS
+data_storage_address = config.SMADDRESS
 continue_running = True
 logger = logging.getLogger('SensorsModule')
 
@@ -65,7 +65,7 @@ class SensorsModule:
 
 
 def repeat_every_n_seconds(callback, task):
-    n = config.POLLING_INTERVAL
+    n = config.POLL_INTERVAL
     global continue_running
     while continue_running:
         callback(task())

@@ -3,15 +3,22 @@ from pydantic import SecretStr
 
 
 class Settings(BaseSettings):
+    # Данные для подключения к MySQL серверу
     HOST: str
     USER: str
     PASSWORD: SecretStr
     DATABASE: str
-
-    # Настройки модуля хранения
+    
+    # Адрес микросервиса модуля хранения данных
     SMADDRESS: str
+
+    # Порт микросервиса модуля хранения данных
     SMPORT: int
-    # Настройки мудуля сбора
+
+    # Адрес для подключения по modbus tcp
+    MODBUSTCP: str
+    
+    # Интервал опроса датчиков
     POLL_INTERVAL: int
 
     model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')

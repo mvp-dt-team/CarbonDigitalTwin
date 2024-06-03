@@ -8,6 +8,8 @@ from sensors_module.sensors.modbus_sensor.tcp_client import ModbusTCPClient
 from sensors_module.sensors.random_sensor.sensor import RandomSensor
 from sensors_module.sensors.sensor import Sensor
 
+from config_reader import config
+
 logger = logging.getLogger('CustomerSettings')
 
 
@@ -35,5 +37,5 @@ class CustomerSettings:
     def init_connections(self):
         self.connections = {}
 
-        self.connections['modbus'] = ModbusTCPClient('192.168.0.1')
+        self.connections['modbus'] = ModbusTCPClient(config.MODBASTCP)
         self.connections['modbus'].connect()
