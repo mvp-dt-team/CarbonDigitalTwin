@@ -4,14 +4,14 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 
-class Measurement(BaseModel):
+class MeasurementsGet(BaseModel):
     m_data: float
     sensor_item_id: int
     measurement_source_id: int
     insert_ts: Optional[datetime] = None
 
 
-class MeasurementsInfo(BaseModel):
+class MeasurementsPost(BaseModel):
     query_id: int
     insert_ts: datetime
-    insert_values: List[Measurement]
+    insert_values: List[MeasurementsGet]

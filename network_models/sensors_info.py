@@ -9,8 +9,16 @@ class SensorProperty(BaseModel):
     measurement_source_id: int
 
 
-class SensorInfo(BaseModel):
+class SensorInfoPost(BaseModel):
     id: Optional[int] = None
+    parameters: Dict[str, str]
+    type: str
+    properties: List[SensorProperty]
+    is_active: Optional[bool] = None
+    description: Optional[str] = None
+    sensor_model_id: Optional[int] = None
+
+class SensorInfoGet(BaseModel):
     parameters: Dict[str, str]
     type: str
     properties: List[SensorProperty]

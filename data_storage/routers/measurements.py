@@ -4,8 +4,7 @@ from mysql.connector import IntegrityError
 from fastapi import APIRouter, Query, HTTPException
 from typing import List, Annotated
 
-from network_models.measurements_info import MeasurementsInfo, Measurement
-from network_models.sensor_model_info import SensorModelInfo
+from network_models.measurements_info import MeasurementsGet, MeasurementsPost
 from data_storage.mysql_storage import MySQLStorage
 
 
@@ -15,7 +14,7 @@ def get_measurements_router(storage: MySQLStorage):
     )
 
     @router.post("/")
-    async def add_measurement(request: MeasurementsInfo):
+    async def add_measurement(request: MeasurementsPost):
         for measurement in request.insert_values:
             try:
                 storage.add_measurement(measurement, request.query_id, request.insert_ts)
@@ -26,7 +25,7 @@ def get_measurements_router(storage: MySQLStorage):
                     raise HTTPException(status_code=500, detail="An unexpected error occurred.")
 
     @router.get("/")
-    async def get_measurements(measurement_source_ids: Annotated[list[int], Query()] = []) -> List[Measurement]:
+    async def get_measurements(measurement_source_ids: Annotated[list[int], Query()] = []) -> List[MeasurementsGet]:
         if len(measurement_source_ids) == 0:
             raise HTTPException(status_code=400, detail="Indicate the sources")
         return storage.get_last_three_measurements_for_sources(measurement_source_ids)
