@@ -2,6 +2,7 @@ import datetime
 import logging
 import random
 from typing import List, Any
+import uuid
 
 import requests
 
@@ -63,7 +64,7 @@ class StorageClient:
                     sensor_item_id=sensor_id,
                     measurement_source_id=property_id
                 ))
-        query_id = random.randint(0, 10 ** 9)  # todo: add retries on conflict
+        query_id = uuid.uuid4().int
         sent_data = MeasurementsInfo(
             query_id=query_id,
             insert_ts=datetime.datetime.now(),

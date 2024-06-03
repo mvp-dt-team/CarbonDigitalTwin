@@ -51,6 +51,8 @@ class RandomSensor(Sensor):
             raise Exception("Property not found")
         if prop.unit == Unit.CELSIUS:
             return random.uniform(-1, 100)
+        if prop.unit == Unit.PASCAL:
+            return random.uniform(100300, 10**8)
         if prop.unit == Unit.TOGGLER:
             return random.choice([0, 1])
         raise Exception("Unit not supported")
