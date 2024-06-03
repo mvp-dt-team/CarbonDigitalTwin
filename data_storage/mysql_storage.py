@@ -11,8 +11,7 @@ from network_models.measurements_info import Measurement
 from network_models.sensor_model_info import SensorModelInfo
 from network_models.sensors_info import SensorInfo, SensorProperty
 
-from .config import config
-
+from config_reader import config
 
 def sqlalchemy_session(engine_url):
     def decorator(func):
@@ -39,7 +38,7 @@ def sqlalchemy_session(engine_url):
 
 
 class MySQLStorage():
-    engine_url = f'mysql+pymysql://develop:aa09dd995C72_5355a598fc7D8ab1230a@195.133.147.52:3306/digital_twin_database'
+    engine_url = f'mysql+pymysql://{config.USER}:{config.PASSWORD.get_secret_value()}@{config.HOST}:3306/{config.DATABASE}'
     def close(self):
         self.mysql_connection.close()
 

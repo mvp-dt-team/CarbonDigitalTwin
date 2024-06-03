@@ -7,7 +7,9 @@ from sensors_module.customer_settings import CustomerSettings
 from sensors_module.sensors.sensor import Sensor
 from sensors_module.storage_client import StorageClient
 
-data_storage_address = 'http://localhost:3000'
+from config_reader import config
+
+data_storage_address = config.STORAGE_MODULE_ADDRESS
 continue_running = True
 logger = logging.getLogger('SensorsModule')
 
@@ -63,7 +65,7 @@ class SensorsModule:
 
 
 def repeat_every_n_seconds(callback, task):
-    n = 5  # todo: init from env
+    n = config.POLLING_INTERVAL
     global continue_running
     while continue_running:
         callback(task())

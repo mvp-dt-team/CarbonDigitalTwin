@@ -55,35 +55,3 @@ class MeasurementModel(Base):
     m_data = Column(Float, nullable=False)
     measurement_source_id = Column(Integer, ForeignKey('measurement_source.id'), primary_key=True)
     sensor_item_id = Column(Integer, ForeignKey('sensor_item.id'), nullable=False)
-
-# # Создание соединения с базой данных
-# engine = create_engine('mysql+pymysql://username:password@host:port/dbname')
-
-# # Создание всех таблиц заново
-# Base.metadata.create_all(engine)
-
-# # Создание сессии
-# Session = sessionmaker(bind=engine)
-# session = Session()
-
-# # Пример добавления данных
-# sensor = Sensor(name='Temperature Sensor', description='Measures temperature')
-# session.add(sensor)
-# session.commit()
-
-# # Получение id добавленного сенсора
-# sensor_id = sensor.id
-
-# # Добавление SensorItem с указанием installation_date
-# sensor_item = SensorItem(
-#     sensor_id=sensor_id,
-#     installation_date=datetime.now(),
-#     is_active=True,
-#     sensor_type='Temperature',
-#     addition_info='Installed in lab'
-# )
-# session.add(sensor_item)
-# session.commit()
-
-# # Закрытие сессии
-# session.close()
