@@ -8,7 +8,7 @@ venv
 .vscode
 *.zip
 .idea
-*.env
+.env
 
 __pycache__
 ML*.csv
