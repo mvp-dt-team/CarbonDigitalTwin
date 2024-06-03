@@ -6,6 +6,9 @@ from data_storage.routers.measurements import get_measurements_router
 from data_storage.routers.sensor_models import get_sensor_models_router
 from data_storage.routers.sensors import get_sensors_router
 
+import logging
+from config_reader import config
+
 # Настройки MySQL
 # mysql_host = 'localhost'
 # mysql_user = 'digital_twin'
@@ -15,6 +18,8 @@ from data_storage.routers.sensors import get_sensors_router
 storage = MySQLStorage()
 
 app = FastAPI()
+
+logging.basicConfig(level=logging.INFO, filename=config.STORAGE_LOG_FILENAME, encoding='utf8')
 
 # Temporary Redirect возникает из-за префиксов роутера, возможно, они используются как-то неверно
 app.include_router(get_measurement_sources_router(storage), prefix="/measurement_source")

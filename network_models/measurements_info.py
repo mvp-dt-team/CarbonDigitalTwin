@@ -12,6 +12,5 @@ class MeasurementsGet(BaseModel):
 
 
 class MeasurementsPost(BaseModel):
-    query_id: int
     insert_ts: datetime
     insert_values: List[MeasurementsGet]

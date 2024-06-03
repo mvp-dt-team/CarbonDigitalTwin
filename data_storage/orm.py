@@ -1,7 +1,10 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, DateTime, ForeignKey, VARCHAR, Float
+from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, DateTime, ForeignKey, VARCHAR, Float, BigInteger
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
+from sqlalchemy.sql import text
+
+from config_reader import config
 
 # Определение базового класса для декларативного стиля
 Base = declarative_base()
@@ -44,14 +47,29 @@ class SensorParamsModel(Base):
 
 class RawDataModel(Base):
     __tablename__ = 'raw_data'
-    query_id = Column(Integer, primary_key=True, nullable=False)
+    query_id = Column(BigInteger, primary_key=True, nullable=False, autoincrement=True)
     m_data = Column(Text, nullable=False)
     measurement_source_id = Column(Integer, ForeignKey('measurement_source.id'), primary_key=True)
 
 class MeasurementModel(Base):
     __tablename__ = 'measurement'
-    query_id = Column(Integer, primary_key=True, nullable=False)
+    query_id = Column(BigInteger, primary_key=True, nullable=False, autoincrement=True)
     insert_ts = Column(Integer, nullable=False)
     m_data = Column(Float, nullable=False)
     measurement_source_id = Column(Integer, ForeignKey('measurement_source.id'), primary_key=True)
     sensor_item_id = Column(Integer, ForeignKey('sensor_item.id'), nullable=False)
+
+# НЕОБХОДИМО ПРОПИСАТЬ ОТ SUPER НА СЕРВЕРЕ MYSQL 
+# DELIMITER //
+# CREATE TRIGGER reset_query_id_seq
+# BEFORE INSERT ON measurement
+# FOR EACH ROW
+# BEGIN
+#     DECLARE max_value BIGINT;
+#     SET max_value = 9223372036854775807; -- BIGINT max value
+
+#     IF NEW.query_id >= max_value THEN
+#         SET NEW.query_id = 1;
+#     END IF;
+# END//
+# DELIMITER ;

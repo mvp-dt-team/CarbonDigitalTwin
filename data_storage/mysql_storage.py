@@ -13,6 +13,10 @@ from network_models.sensors_info import SensorInfoGet, SensorInfoPost, SensorPro
 
 from config_reader import config
 
+import logging
+
+logger = logging.getLogger('DataStorageModule')
+
 def sqlalchemy_session(engine_url):
     def decorator(func):
         @wraps(func)
@@ -39,21 +43,23 @@ def sqlalchemy_session(engine_url):
 
 class MySQLStorage():
     engine_url = f'mysql+pymysql://{config.USER}:{config.PASSWORD.get_secret_value()}@{config.HOST}:3306/{config.DATABASE}'
-    def close(self):
-        self.mysql_connection.close()
+    # def close(self):
+    #     self.mysql_connection.close()
 
     def __init__(self) -> None:
-        pass
+        logger.debug("module starting")
+
     @sqlalchemy_session(engine_url)
-    def add_measurement(self, measurement: MeasurementsPost, query_id: int, insert_ts: datetime, session: Session) -> None:
+    def add_measurement(self, measurement: MeasurementsPost, insert_ts: datetime, session: Session) -> None:
             measurement_new = MeasurementModel(
-                query_id=query_id,
                 insert_ts=int(insert_ts.timestamp()),
                 m_data=measurement.m_data,
                 sensor_item_id=measurement.sensor_item_id,
                 measurement_source_id=measurement.measurement_source_id
             )
             session.add(measurement_new)
+            logger.info(f"Added measurement sensor_item_id = {measurement_new.sensor_item_id}, m_data = {measurement_new.m_data}")
+            
 
     @sqlalchemy_session(engine_url)
     def get_last_three_measurements_for_sources(self, measurement_source_ids: List[int], session: Session) -> List[MeasurementsGet]:
@@ -64,8 +70,9 @@ class MySQLStorage():
                             .order_by(desc(MeasurementModel.insert_ts))\
                             .limit(3)\
                             .all()
-            result = [Measurement(m_data=result_data.m_data, sensor_item_id=result_data.sensor_item_id, measurement_source_id=result_data.measurement_source_id, insert_ts=result_data.insert_ts) for result_data in result]
+            result = [MeasurementsGet(m_data=result_data.m_data, sensor_item_id=result_data.sensor_item_id, measurement_source_id=result_data.measurement_source_id, insert_ts=result_data.insert_ts) for result_data in result]
             measurements.extend(result)
+            logger.info(f"Get measurements {measurements}")
         return measurements
 
     # MEASUREMENT SOURCE ########################
@@ -81,6 +88,7 @@ class MySQLStorage():
                 unit=source.units
             ) for source in sources_data
         ]
+        logger.info(f"Get measurement sources {sources}")
         return sources
 
     @sqlalchemy_session(engine_url)
@@ -91,6 +99,7 @@ class MySQLStorage():
             units=source.unit
         )
         session.add(new_source)
+        logger.info(f"Add measurement sources {new_source}")
 
 
     # SENSORS ##############
@@ -104,6 +113,7 @@ class MySQLStorage():
                 description=model.description
             ) for model in models_data
         ]
+        logger.info(f"Get sensors models {models}")
         return models
 
     @sqlalchemy_session(engine_url)
@@ -113,6 +123,7 @@ class MySQLStorage():
             description=model.description
         )
         session.add(new_model)
+        logger.info(f"Add sensors model {new_model}")
 
 
     @sqlalchemy_session(engine_url)
@@ -146,6 +157,7 @@ class MySQLStorage():
 
             sensors.append(SensorInfoGet(id=sensor_id, parameters=sensor_parameters, type=sensor_type, properties=props, is_active=is_active, description=addition_info, sensor_model_id=model_id))
         
+        logger.info(f"Getting sensors in the amount of {len(sensors)}")
         return sensors
 
 
@@ -188,7 +200,9 @@ class MySQLStorage():
                     param_value=param_value
                 )
                 session.add(new_sensor_param)
+        logger.info(f"Add new sensor {new_sensor_item}")
 
     @sqlalchemy_session(engine_url)
     def toggle_sensor_activation(self, sensor_item_id: int, is_active: bool, session):
         session.query(SensorItemModel).filter(SensorItemModel.id == sensor_item_id).update({SensorItemModel.is_active: is_active})
+        logger.info(f"Togled sensor status (id = {sensor_item_id})")
