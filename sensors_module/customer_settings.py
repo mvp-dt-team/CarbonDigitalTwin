@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, List
 
-from network_models.sensors_info import SensorInfo
+from network_models.sensors_info import SensorInfoPost
 from sensors_module.sensors.connection import Connection
 from sensors_module.sensors.modbus_sensor.sensor import ModbusSensor
 from sensors_module.sensors.modbus_sensor.tcp_client import ModbusTCPClient
@@ -19,7 +19,7 @@ class CustomerSettings:
     def __init__(self) -> None:
         self.init_connections()
 
-    def create_sensors_from_response(self, items: List[SensorInfo]) -> Dict[int, Sensor]:
+    def create_sensors_from_response(self, items: List[SensorInfoPost]) -> Dict[int, Sensor]:
         sensors = {}
         for item in items:
             if item['type'] == "modbus":

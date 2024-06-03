@@ -1,12 +1,10 @@
 import datetime
 import logging
-import random
 from typing import List, Any
-import uuid
 
 import requests
 
-from network_models.measurements_info import MeasurementsInfo, Measurement
+from network_models.measurements_info import MeasurementsPost, MeasurementsGet
 
 logger = logging.getLogger('StorageClient')
 
@@ -59,23 +57,21 @@ class StorageClient:
         logger.info(data)
         for sensor_id in data:
             for property_id in data[sensor_id]:
-                values.append(Measurement(
+                values.append(MeasurementsGet(
                     m_data=data[sensor_id][property_id],
                     sensor_item_id=sensor_id,
                     measurement_source_id=property_id
                 ))
-        query_id = uuid.uuid4().int
-        sent_data = MeasurementsInfo(
-            query_id=query_id,
-            insert_ts=datetime.datetime.now(),
-            insert_values=values
-        )
+            sent_data = MeasurementsPost(
+                insert_ts=datetime.datetime.now(),
+                insert_values=values
+            )
 
-        url = self.storage_address + '/measurement'
-        try:
-            headers = {'Content-Type': 'application/json'}
+            url = self.storage_address + '/measurement'
+            try:
+                headers = {'Content-Type': 'application/json'}
 
-            response = requests.post(url, data=sent_data.model_dump_json(), headers=headers)
-            logger.info(f'Sent measurement: Status Code: {response.status_code}; Response Body: {response.json()}')
-        except requests.exceptions.RequestException as err:
-            logger.warning(f"Sent measurement: Something went wrong: {err}")
+                response = requests.post(url, data=sent_data.model_dump_json(), headers=headers)
+                logger.info(f'Sent measurement: Status Code: {response.status_code}; Response Body: {response.json()}')
+            except requests.exceptions.RequestException as err:
+                logger.warning(f"Sent measurement: Something went wrong: {err}")

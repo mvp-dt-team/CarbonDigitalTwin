@@ -10,7 +10,6 @@ class SensorProperty(BaseModel):
 
 
 class SensorInfoPost(BaseModel):
-    id: Optional[int] = None
     parameters: Dict[str, str]
     type: str
     properties: List[SensorProperty]
@@ -19,6 +18,7 @@ class SensorInfoPost(BaseModel):
     sensor_model_id: Optional[int] = None
 
 class SensorInfoGet(BaseModel):
+    id: Optional[int] = None
     parameters: Dict[str, str]
     type: str
     properties: List[SensorProperty]

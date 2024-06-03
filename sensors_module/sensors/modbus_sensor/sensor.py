@@ -8,7 +8,7 @@ from sensors_module.sensors.modbus_sensor.property import ModbusProperty, Regist
 from pymodbus.exceptions import ModbusIOException
 
 from sensors_module.sensors.unit import get_unit_from_str
-from network_models.sensors_info import SensorInfo
+from network_models.sensors_info import SensorInfoPost
 
 logger = logging.getLogger('ModbusSensor')
 
@@ -46,7 +46,7 @@ class ModbusSensor(Sensor):
         self.address = address
 
     @classmethod
-    def from_network(cls, sensor: SensorInfo) -> 'Sensor':
+    def from_network(cls, sensor: SensorInfoPost) -> 'Sensor':
         # добавить проверку наличия свойств и выдать соответствующие ошибки
         address = int(sensor['parameters'].get("address", 0))
 

@@ -2,7 +2,7 @@ import logging
 import random
 from typing import Any, Dict, Tuple, Callable
 
-from network_models.sensors_info import SensorInfo
+from network_models.sensors_info import SensorInfoPost
 from sensors_module.sensors.property import Property
 from sensors_module.sensors.sensor import Sensor
 from sensors_module.sensors.unit import Unit, get_unit_from_str
@@ -22,7 +22,7 @@ class RandomSensor(Sensor):
         super().__init__(title, id, properties)
 
     @classmethod
-    def from_network(cls, sensor: SensorInfo) -> 'Sensor':
+    def from_network(cls, sensor: SensorInfoPost) -> 'Sensor':
         properties = {
 
             prop['measurement_source_id']: Property(
