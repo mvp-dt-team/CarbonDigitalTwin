@@ -6,10 +6,10 @@ from functools import wraps
 from sqlalchemy.orm import sessionmaker, Session
 from data_storage.orm import SensorModel, MeasurementSourceModel, SensorItemModel, SensorSourceMappingModel, SensorParamsModel, RawDataModel, MeasurementModel
 
-from network_models.measurement_source_info import MeasurementSourceInfo
-from network_models.measurements_info import Measurement
-from network_models.sensor_model_info import SensorModelInfo
-from network_models.sensors_info import SensorInfo, SensorProperty
+from network_models.measurement_source_info import MeasurementSourceInfoGet, MeasurementSourceInfoPost
+from network_models.measurements_info import MeasurementsPost, MeasurementsGet
+from network_models.sensor_model_info import SensorModelInfoPost, SensorModelInfoGet
+from network_models.sensors_info import SensorInfoGet, SensorInfoPost, SensorProperty
 
 from config_reader import config
 
@@ -45,7 +45,7 @@ class MySQLStorage():
     def __init__(self) -> None:
         pass
     @sqlalchemy_session(engine_url)
-    def add_measurement(self, measurement: Measurement, query_id: int, insert_ts: datetime, session: Session) -> None:
+    def add_measurement(self, measurement: MeasurementsPost, query_id: int, insert_ts: datetime, session: Session) -> None:
             measurement_new = MeasurementModel(
                 query_id=query_id,
                 insert_ts=int(insert_ts.timestamp()),
@@ -56,7 +56,7 @@ class MySQLStorage():
             session.add(measurement_new)
 
     @sqlalchemy_session(engine_url)
-    def get_last_three_measurements_for_sources(self, measurement_source_ids: List[int], session: Session) -> List[Measurement]:
+    def get_last_three_measurements_for_sources(self, measurement_source_ids: List[int], session: Session) -> List[MeasurementsGet]:
         measurements = []
         for source_id in measurement_source_ids:
             result = session.query(MeasurementModel)\
@@ -71,10 +71,10 @@ class MySQLStorage():
     # MEASUREMENT SOURCE ########################
 
     @sqlalchemy_session(engine_url)
-    def get_measurement_sources(self, session: Session) -> List[MeasurementSourceInfo]:
+    def get_measurement_sources(self, session: Session) -> List[MeasurementSourceInfoGet]:
         sources_data = session.query(MeasurementSourceModel).all()
         sources = [
-            MeasurementSourceInfo(
+            MeasurementSourceInfoGet(
                 id=source.id,
                 name=source.name,
                 description=source.description,
@@ -84,7 +84,7 @@ class MySQLStorage():
         return sources
 
     @sqlalchemy_session(engine_url)
-    def add_measurement_source(self, source: MeasurementSourceInfo, session: Session) -> None:
+    def add_measurement_source(self, source: MeasurementSourceInfoPost, session: Session) -> None:
         new_source = MeasurementSourceModel(
             name=source.name,
             description=source.description,
@@ -95,10 +95,10 @@ class MySQLStorage():
 
     # SENSORS ##############
     @sqlalchemy_session(engine_url)
-    def get_sensors_models(self, session) -> List[SensorModelInfo]:
+    def get_sensors_models(self, session) -> List[SensorModelInfoGet]:
         models_data = session.query(SensorModel).all()
         models = [
-            SensorModelInfo(
+            SensorModelInfoGet(
                 id=model.id,
                 name=model.name,
                 description=model.description
@@ -107,7 +107,7 @@ class MySQLStorage():
         return models
 
     @sqlalchemy_session(engine_url)
-    def add_sensor_model(self, model: SensorModelInfo, session) -> None:
+    def add_sensor_model(self, model: SensorModelInfoPost, session) -> None:
         new_model = SensorModel(
             name=model.name,
             description=model.description
@@ -116,13 +116,13 @@ class MySQLStorage():
 
 
     @sqlalchemy_session(engine_url)
-    def get_sensors_info(self, need_active: bool, session) -> List[SensorInfo]:
+    def get_sensors_info(self, need_active: bool, session) -> List[SensorInfoGet]:
         query = session.query(SensorItemModel)
         if need_active:
             query = query.filter(SensorItemModel.is_active == True)
         
         sensors_data = query.all()
-        sensors: List[SensorInfo] = []
+        sensors: List[SensorInfoGet] = []
 
         for raw_sensor in sensors_data:
             sensor_id = raw_sensor.id
@@ -144,13 +144,13 @@ class MySQLStorage():
                 property_parameters = {param.param_name: param.param_value for param in parameters_query if param.property_id == property_id}
                 props.append(SensorProperty(measurement_source_id=property_id, name=property_name, unit=property_units, parameters=property_parameters))
 
-            sensors.append(SensorInfo(id=sensor_id, parameters=sensor_parameters, type=sensor_type, properties=props, is_active=is_active, description=addition_info, sensor_model_id=model_id))
+            sensors.append(SensorInfoGet(id=sensor_id, parameters=sensor_parameters, type=sensor_type, properties=props, is_active=is_active, description=addition_info, sensor_model_id=model_id))
         
         return sensors
 
 
     @sqlalchemy_session(engine_url)
-    def add_sensor(self, sensor: SensorInfo, session):
+    def add_sensor(self, sensor: SensorInfoPost, session):
         # Добавляем новый sensor_item
         new_sensor_item = SensorItemModel(
             sensor_id=sensor.sensor_model_id,

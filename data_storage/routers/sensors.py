@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query
 from typing import List
-from network_models.sensors_info import SensorInfo
+from network_models.sensors_info import SensorInfoGet, SensorInfoPost
 from data_storage.mysql_storage import MySQLStorage
 
 
@@ -9,12 +9,12 @@ def get_sensors_router(storage: MySQLStorage):
         tags=["Работа с датчиками"],
     )
 
-    @router.get("/", response_model=List[SensorInfo])
+    @router.get("/", response_model=List[SensorInfoGet])
     async def get_sensors(need_active: bool = Query(None, description="Filter sensors by their active state")):
         return storage.get_sensors_info(need_active)
 
     @router.post("/")
-    async def add_sensor(sensor: SensorInfo):
+    async def add_sensor(sensor: SensorInfoPost):
         storage.add_sensor(sensor)
 
     @router.patch("/{sensor_item_id}/enable")
