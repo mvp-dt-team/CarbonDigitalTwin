@@ -26,7 +26,7 @@ MAX_RESULT = 1.0
 
 class Handler:
     def __init__(self, url):
-        self.sources = []
+        self.sources: List[Source] = []
         self.models = []
         self.queue = Queue()
         self.source_model_mapping = {}

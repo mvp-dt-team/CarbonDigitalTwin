@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модуль Управления</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <style>
+        /* styles.css */
+
+        body {
+            background-color: #f5f5f5;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .menu-icon {
+            width: 30px;
+            height: 30px;
+        }
+
+        .logout-btn {
+            width: 30px;
+            height: 30px;
+            background: url('logout-icon.png') no-repeat center;
+            background-size: contain;
+            border: none;
+            cursor: pointer;
+        }
+
+        .w-30 {
+            width: 30%;
+        }
+    </style>
+    <div class="container my-4 p-4 bg-white rounded shadow">
+        <header class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center">
+                <div class="menu-icon bg-secondary rounded mr-2"></div>
+                <div class="h5 mb-0">Prediction module control panel</div>
+            </div>
+            <div class="d-flex align-items-center">
+                <button class="btn btn-secondary mr-2">Admin</button>
+                <button class="btn btn-outline-secondary logout-btn"></button>
+            </div>
+        </header>
+        <main class="row">
+            <div class="col-md-7 mb-4">
+                <div class="p-4 bg-light rounded">
+                    <h1 class="h4">Модуль <span class="badge badge-secondary">В8-06-90</span></h1>
+                    <p>Предсказание свойств</p>
+                    <div class="d-flex justify-content-between mt-4">
+                        <div class="bg-white p-3 rounded text-center w-30">
+                            <span>Статус</span><br>
+                            <span class="text-success font-weight-bold">В работе</span>
+                        </div>
+                        <div class="bg-white p-3 rounded text-center w-30">
+                            <span>Текущее значение</span><br>
+                            <span class="h5">56,84</span>
+                        </div>
+                        <div class="bg-white p-3 rounded text-center w-30">
+                            <span>Частота опроса</span><br>
+                            <span>Раз в 5 сек</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-secondary btn-block mt-4">Список подключенных датчиков</button>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="p-4 bg-light rounded mb-4">
+                    <h2 class="h5">Настройки</h2>
+                    <button class="btn btn-outline-secondary btn-block mb-2">Дообучить модель</button>
+                    <button class="btn btn-outline-secondary btn-block mb-2">Сменить модель</button>
+                    <button class="btn btn-outline-secondary btn-block">Параметры модуля</button>
+                </div>
+                <div class="p-4 bg-light rounded">
+                    <h2 class="h5">Измеряемые свойства</h2>
+                    <button class="btn btn-outline-secondary btn-block mb-2">Модуль упругости</button>
+                    <button class="btn btn-outline-secondary btn-block mb-2">Плотность</button>
+                    <button class="btn btn-outline-secondary btn-block">Модуль Юнга</button>
+                </div>
+            </div>
+        </main>
+        <footer class="d-flex justify-content-between align-items-center mt-4">
+            <div>
+                <button class="btn btn-danger mr-2">Выкл</button>
+                <button class="btn btn-warning">Перезагрузка</button>
+            </div>
+            <div>
+                <span class="h5">Время работы</span>
+                <span class="h4 ml-2">567 ч</span>
+            </div>
+        </footer>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        // script.js
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const toggleButtons = document.querySelectorAll(".toggle-btn");
+
+            toggleButtons.forEach(button => {
+                button.addEventListener("click", () => {
+                    button.classList.toggle("active");
+                });
+            });
+        });
+    </script>
+</body>
+</html>

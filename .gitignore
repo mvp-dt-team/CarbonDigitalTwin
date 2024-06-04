@@ -17,3 +17,4 @@ ML*.csv
 *.png
 *.gif
 .venv
+DTInterface/db.sqlite3
