@@ -2,10 +2,10 @@ from classes import Handler, Source, Model
 import os
 import requests
 import json
-
+from config_reader import config
 sources = []
 
-url = 'localhost:5000'
+url = f'{config.SMADDRESS}'
 
 getting_sources = requests.get(f'http://{url}/camera')
 if getting_sources.ok:

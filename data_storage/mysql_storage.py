@@ -9,7 +9,7 @@ from data_storage.orm import SensorModel, MeasurementSourceModel, SensorItemMode
 from network_models.measurement_source_info import MeasurementSourceInfoGet, MeasurementSourceInfoPost
 from network_models.measurements_info import MeasurementsPost, MeasurementsGet
 from network_models.sensor_model_info import SensorModelInfoPost, SensorModelInfoGet
-from network_models.sensors_info import SensorInfoGet, SensorInfoPost, SensorProperty
+from network_models.sensors_info import SensorInfoGet, SensorInfoPost, SensorPropertyGet
 
 from config_reader import config
 
@@ -150,10 +150,10 @@ class MySQLStorage():
                                     .filter(SensorSourceMappingModel.sensor_item_id == sensor_id)\
                                     .all()
             
-            props: List[SensorProperty] = []
+            props: List[SensorPropertyGet] = []
             for property_id, property_name, property_units in properties_query:
                 property_parameters = {param.param_name: param.param_value for param in parameters_query if param.property_id == property_id}
-                props.append(SensorProperty(measurement_source_id=property_id, name=property_name, unit=property_units, parameters=property_parameters))
+                props.append(SensorPropertyGet(measurement_source_id=property_id, name=property_name, unit=property_units, parameters=property_parameters))
 
             sensors.append(SensorInfoGet(id=sensor_id, parameters=sensor_parameters, type=sensor_type, properties=props, is_active=is_active, description=addition_info, sensor_model_id=model_id))
         
@@ -206,3 +206,4 @@ class MySQLStorage():
     def toggle_sensor_activation(self, sensor_item_id: int, is_active: bool, session):
         session.query(SensorItemModel).filter(SensorItemModel.id == sensor_item_id).update({SensorItemModel.is_active: is_active})
         logger.info(f"Togled sensor status (id = {sensor_item_id})")
+        return {"status": "ok"}

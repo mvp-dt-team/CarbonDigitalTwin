@@ -32,7 +32,7 @@ class StorageClient:
         self.storage_address = storage_address
 
     def fetch_sensor_data(self) -> List[Any]:
-        url = self.storage_address + '/sensor?active=true'
+        url = self.storage_address + '/sensor?need_active=true'
 
         sensor_data = []
         try:
@@ -49,7 +49,7 @@ class StorageClient:
             logger.error(f"Oops: Something Else: {err}")
 
         print_sensor_data(sensor_data)
-
+        print(len(sensor_data))
         return sensor_data
 
     def send_measurement_data(self, data: dict[int, dict[int, Any]]):

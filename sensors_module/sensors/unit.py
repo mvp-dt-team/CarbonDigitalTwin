@@ -4,6 +4,7 @@ from enum import StrEnum, auto
 class Unit(StrEnum):
     CELSIUS = auto()
     PASCAL = auto()
+    PERCENT = auto()
     CUBIC_METER_PER_SECOND = auto()
     TOGGLER = auto()
 
@@ -15,3 +16,5 @@ def get_unit_from_str(unit_str: str) -> Unit:
         return Unit.TOGGLER
     if unit_str.lower() == "паскали" or unit_str.lower() == "паскаль":
         return Unit.PASCAL
+    if unit_str.lower() == "процент" or unit_str.lower() == "проценты":
+        return Unit.PERCENT

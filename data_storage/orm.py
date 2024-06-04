@@ -4,8 +4,6 @@ from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 from sqlalchemy.sql import text
 
-from config_reader import config
-
 # Определение базового класса для декларативного стиля
 Base = declarative_base()
 

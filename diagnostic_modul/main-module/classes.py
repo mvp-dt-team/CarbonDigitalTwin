@@ -17,16 +17,16 @@ from sklearn.exceptions import DataConversionWarning
 warnings.filterwarnings(action='ignore', category=UserWarning)
 
 class Sensor:
-    def __init__(self, id: int, measurement_source_id: int, type_sensor: str, name: str, unit: int, description: str, model_name: str, installation_time: str, deactivation_time: str):
+    def __init__(self, id: int, measurement_source_id: int, type_sensor: str, name: str, unit: int, description: str): # model_name: str, installation_time: str, deactivation_time: str
         self.type_sensor = type_sensor
         self.id = id
         self.measurement_source_id = measurement_source_id
         self.name = name
         self.unit = unit
         self.description = description
-        self.model_name = model_name
-        self.installation_time = installation_time
-        self.deactivation_time = deactivation_time
+        # self.model_name = model_name
+        # self.installation_time = installation_time
+        # self.deactivation_time = deactivation_time
 
 
 class Model:
@@ -68,7 +68,7 @@ class Block:
                 "time_to": datetime.utcnow().replace(microsecond=0).isoformat() + 'Z'
             })
         try:
-            response = requests.post(url=f'http://{url}/measurement_data', json={'measurements': measurements})
+            response = requests.post(url=f'http://{url}/measurement', json={'measurements': measurements})
             if response.ok:
                 return [x['data'][-1] for x in json.loads(response.content)] 
             else:
@@ -85,7 +85,7 @@ class Handler:
         self.status = 0
         self.logger = logging.getLogger('MainModule')
         self.logger.setLevel(logging.DEBUG)
-        self.blocks = []
+        self.blocks: List[Block] = []
         self.polling_interval = polling_interval
         self.running = True
         self.url = url

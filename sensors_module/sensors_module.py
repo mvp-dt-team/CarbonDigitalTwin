@@ -25,6 +25,7 @@ class SensorsModule:
         sensor_data = self.storage_client.fetch_sensor_data()
 
         self.sensors = self.customer_settings.create_sensors_from_response(sensor_data)
+        print(len(self.sensors))
 
     def start(self, callback: Callable[[dict[str, dict[str, Any]]], None]):
         logger.debug("module starting")
