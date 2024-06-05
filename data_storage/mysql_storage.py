@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Annotated
 from mysql.connector import connect
 from sqlalchemy import create_engine, desc
 from functools import wraps
@@ -10,6 +10,7 @@ from network_models.measurement_source_info import MeasurementSourceInfoGet, Mea
 from network_models.measurements_info import MeasurementsPost, MeasurementsGet
 from network_models.sensor_model_info import SensorModelInfoPost, SensorModelInfoGet
 from network_models.sensors_info import SensorInfoGet, SensorInfoPost, SensorPropertyGet
+from network_models.blocks import AttachmentGet, AttachmentPost, PredictionGet, PredictionPost, PropertyModel, MLModelGet, BlockModelGet, SensorBlockinfo, BlockModelPost
 
 from config_reader import config
 
@@ -42,7 +43,8 @@ def sqlalchemy_session(engine_url):
 
 
 class MySQLStorage():
-    engine_url = f'mysql+pymysql://{config.USER}:{config.PASSWORD.get_secret_value()}@{config.HOST}:3306/{config.DATABASE}'
+    # engine_url = f'mysql+pymysql://{config.USER}:{config.PASSWORD.get_secret_value()}@{config.HOST}:3306/{config.DATABASE}'
+    engine_url = f'sqlite:///app.db'
     # def close(self):
     #     self.mysql_connection.close()
 
@@ -207,3 +209,55 @@ class MySQLStorage():
         session.query(SensorItemModel).filter(SensorItemModel.id == sensor_item_id).update({SensorItemModel.is_active: is_active})
         logger.info(f"Togled sensor status (id = {sensor_item_id})")
         return {"status": "ok"}
+
+
+
+    ### MLMODULE
+
+    @sqlalchemy_session(engine_url)
+    def get_block_list(self, need_active: bool, session):
+        pass
+
+    @sqlalchemy_session(engine_url)
+    def get_block(self, block_id: int, session):
+        pass
+    
+    @sqlalchemy_session(engine_url)
+    def toggle_block(self, block_id: int, session):
+        pass
+
+    @sqlalchemy_session(engine_url)
+    def add_block(self, block_data: BlockModelPost, session):
+        pass
+
+    @sqlalchemy_session(engine_url)
+    def get_model_list(self, session):
+        pass
+
+    @sqlalchemy_session(engine_url)
+    def get_model(self, model_id: int, session):
+        pass
+
+    @sqlalchemy_session(engine_url)
+    def add_model(self, session):
+        pass
+
+    @sqlalchemy_session(engine_url)
+    def get_predictions(self, block_ids: List[int], session):
+        pass
+
+    @sqlalchemy_session(engine_url)
+    def add_prediction(self, prediction: PredictionPost, insert_ts: datetime, session):
+        pass
+
+    @sqlalchemy_session(engine_url)
+    def get_attachments(self, block_ids: List[int], session):
+        pass
+
+    @sqlalchemy_session(engine_url)
+    def get_attachment(self, attachment_id: int, session):
+        pass
+
+    @sqlalchemy_session(engine_url)
+    def add_attachments(self, attachment: AttachmentPost, session):
+        pass

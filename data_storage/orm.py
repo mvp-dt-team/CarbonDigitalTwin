@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, DateTime, ForeignKey, VARCHAR, Float, BigInteger
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
 from sqlalchemy.sql import text
 
@@ -56,6 +56,48 @@ class MeasurementModel(Base):
     m_data = Column(Float, nullable=False)
     measurement_source_id = Column(Integer, ForeignKey('measurement_source.id'), primary_key=True)
     sensor_item_id = Column(Integer, ForeignKey('sensor_item.id'), nullable=False)
+
+class Attachment(Base):
+    __tablename__ = 'attachment'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(100), nullable=False)
+    description = Column(String(500))
+    type = Column(String(50), nullable=False)
+    content = Column(String, nullable=False)
+    model_mapping_id = Column(Integer, ForeignKey('modelmapping.id'))
+
+class ModelMapping(Base):
+    __tablename__ = 'modelmapping'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    measurement_source_id = Column(Integer, ForeignKey('measurementsource.id'), nullable=False)
+    sensor_item_id = Column(Integer, ForeignKey('sensoritem.id'), nullable=False)
+    model_id = Column(Integer, nullable=False)
+    block_id = Column(Integer, ForeignKey('block.id'), nullable=False)
+
+    measurement_source = Column(Integer, ForeignKey('measurement_source.id'), primary_key=True)
+    sensor_item = Column(Integer, ForeignKey('sensor_item.id'), nullable=False, primary_key=True)
+    block = Column(Integer, ForeignKey('block.id'), nullable=False, primary_key=True)
+
+class Property(Base):
+    __tablename__ = 'property'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(100), nullable=False)
+    unit = Column(String(100), nullable=False)
+
+class Prediction(Base):
+    __tablename__ = 'prediction'
+    insert_ts = Column(Integer, nullable=False)
+    m_data = Column(Float, nullable=False)
+    property_id = Column(Integer, ForeignKey('property.id'), nullable=False)
+    block_id = Column(Integer, ForeignKey('block.id'), nullable=False)
+
+    property = Column(Integer, ForeignKey('property.id'), nullable=False, primary_key=True)
+    block = Column(Integer, ForeignKey('block.id'), nullable=False, primary_key=True)
+
+class Block(Base):
+    __tablename__ = 'block'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(50), nullable=False)
 
 # НЕОБХОДИМО ПРОПИСАТЬ ОТ SUPER НА СЕРВЕРЕ MYSQL 
 # DELIMITER //
