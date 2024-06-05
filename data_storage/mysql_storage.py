@@ -1,22 +1,28 @@
 from datetime import datetime
-from typing import List, Annotated
+from typing import List
 from mysql.connector import connect
 from sqlalchemy import create_engine, desc
 from functools import wraps
 from sqlalchemy.orm import sessionmaker, Session
-from data_storage.orm import SensorModel, MeasurementSourceModel, SensorItemModel, SensorSourceMappingModel, SensorParamsModel, RawDataModel, MeasurementModel
+from data_storage.orm import ModelMappingModel, PredictionModel, AttachmentModel, PropertyModel, BlockModel, SensorModel, MeasurementSourceModel, SensorItemModel, SensorSourceMappingModel, SensorParamsModel, RawDataModel, MeasurementModel
 
 from network_models.measurement_source_info import MeasurementSourceInfoGet, MeasurementSourceInfoPost
 from network_models.measurements_info import MeasurementsPost, MeasurementsGet
 from network_models.sensor_model_info import SensorModelInfoPost, SensorModelInfoGet
 from network_models.sensors_info import SensorInfoGet, SensorInfoPost, SensorPropertyGet
-from network_models.blocks import AttachmentGet, AttachmentPost, PredictionGet, PredictionPost, PropertyModel, MLModelGet, BlockModelGet, SensorBlockinfo, BlockModelPost
+from network_models.blocks import AttachmentGet, AttachmentPost, PredictionGet, PredictionPost, PropertyGet, MLModelGet, BlockModelGet, SensorBlockinfo, BlockModelPost
 
+
+from starlette.responses import FileResponse
+from http.client import HTTPException
 from config_reader import config
 
 import logging
+import os
 
 logger = logging.getLogger('DataStorageModule')
+
+UPLOAD_DIR=os.path.abspath('./uploads')
 
 def sqlalchemy_session(engine_url):
     def decorator(func):
@@ -52,7 +58,7 @@ class MySQLStorage():
         logger.debug("module starting")
 
     @sqlalchemy_session(engine_url)
-    def add_measurement(self, measurement: MeasurementsPost, insert_ts: datetime, session: Session) -> None:
+    def add_measurement(self, measurement: MeasurementsGet, insert_ts: datetime, session: Session) -> None:
             measurement_new = MeasurementModel(
                 insert_ts=int(insert_ts.timestamp()),
                 m_data=measurement.m_data,
@@ -216,48 +222,96 @@ class MySQLStorage():
 
     @sqlalchemy_session(engine_url)
     def get_block_list(self, need_active: bool, session):
-        pass
+        query = session.query(BlockModel).filter(BlockModel.active == need_active)
+        return query.all()
 
     @sqlalchemy_session(engine_url)
     def get_block(self, block_id: int, session):
-        pass
+        block = session.query(BlockModel).filter(BlockModel.id == block_id).first()
+        if not block:
+            raise HTTPException(status_code=404, detail="Block not found")
+        return block
     
     @sqlalchemy_session(engine_url)
     def toggle_block(self, block_id: int, session):
-        pass
+        block = session.query(BlockModel).filter(BlockModel.id == block_id).first()
+        if not block:
+            raise HTTPException(status_code=404, detail="Block not found")
+        
+        block.active = not block.active
+        session.add(block)
 
     @sqlalchemy_session(engine_url)
     def add_block(self, block_data: BlockModelPost, session):
-        pass
+        block = BlockModel(name=block_data.name, model_id=block_data.model, active=True)
+        session.add(block)
+        session.flush()
+        
+        block_model = block_data.model
+
+        for sensor in block_data.sensors:
+            for property_id in block_data.properties:
+                mapping = ModelMappingModel(measurement_source_id=sensor.measurement_source_id, sensor_item_id=sensor.sensor_item_id, model_id=block_model, block_id=block.id, property_id=property_id)
+                session.add(mapping)
 
     @sqlalchemy_session(engine_url)
     def get_model_list(self, session):
-        pass
+        return session.query(AttachmentModel).filter(AttachmentModel.type == 'model').first()
 
     @sqlalchemy_session(engine_url)
     def get_model(self, model_id: int, session):
-        pass
+        model = session.query(AttachmentModel).filter(AttachmentModel.id == model_id).first()
+        if not model:
+            raise HTTPException(status_code=404, detail="Model not found")
+        
+        return FileResponse(model.content, filename=model.name)
 
+    # TODO Развернуть нормально структуру папок для сохранения
     @sqlalchemy_session(engine_url)
-    def add_model(self, session):
-        pass
+    def add_model(self, request: AttachmentGet, content, session):
+        file_path = os.path.join(UPLOAD_DIR, request.name)
+        with open(file_path, "wb") as buffer:
+            buffer.write(content)
+        model = AttachmentModel(name=request.name, description=request.description, type=type, content=file_path)
+        session.add(model)
 
     @sqlalchemy_session(engine_url)
     def get_predictions(self, block_ids: List[int], session):
-        pass
+        query = session.query(PredictionModel).filter(PredictionModel.block_id.in_(block_ids))
+        return query.all()
 
     @sqlalchemy_session(engine_url)
-    def add_prediction(self, prediction: PredictionPost, insert_ts: datetime, session):
-        pass
+    def add_prediction(self, prediction: PredictionGet, insert_ts: datetime, session):
+        pred = PredictionModel(
+            insert_ts=insert_ts,
+            m_data=prediction.m_data,
+            property_id=prediction.property_id,
+            block_id=prediction.block_id
+        )
+        session.add(pred)
 
+    #TODO
     @sqlalchemy_session(engine_url)
     def get_attachments(self, block_ids: List[int], session):
+        # query = session.query(AttachmentModel).filter(AttachmentModel.block_id.in_(block_ids))
+        # return query.all()
         pass
 
     @sqlalchemy_session(engine_url)
     def get_attachment(self, attachment_id: int, session):
-        pass
-
+        attachment = session.query(AttachmentModel).filter(AttachmentModel.id == attachment_id).first()
+        if not attachment:
+            raise HTTPException(status_code=404, detail="Attachment not found")
+        return FileResponse(attachment.content, filename=attachment.name)
+    
+    #TODO
     @sqlalchemy_session(engine_url)
     def add_attachments(self, attachment: AttachmentPost, session):
+        # for att in attachment.insert_values:
+        #     attach = AttachmentModel(
+        #         name=att.name,
+        #         description=att.description,
+        #         type=att.type
+        #     )
+        #     session.add(attach)
         pass

@@ -2,6 +2,10 @@ from flask import request, Flask, jsonify
 import os
 import datetime
 import pandas as pd
+from typing import Optional
+
+from pydantic import BaseModel
+
 
 
 app = Flask(__name__)
@@ -16,6 +20,29 @@ for idx, filename in enumerate(os.listdir('./cameras')):
 
 for camera in cameras:
     models[camera['id']] = model_path
+
+### Единый модуль
+    
+@app.route('/blocks')
+def blocks():
+    return jsonify(cameras)
+
+@app.route('/blocks')
+def blocks():
+    return jsonify(cameras)
+
+@app.route('/blocks')
+def blocks():
+    return jsonify(cameras)
+
+@app.route('/blocks')
+def blocks():
+    return jsonify(cameras)
+
+@app.route('/blocks')
+def blocks():
+    return jsonify(cameras)
+
 
 ### Модуль компьютерного зрения
 

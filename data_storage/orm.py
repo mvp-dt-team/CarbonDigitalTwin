@@ -57,34 +57,30 @@ class MeasurementModel(Base):
     measurement_source_id = Column(Integer, ForeignKey('measurement_source.id'), primary_key=True)
     sensor_item_id = Column(Integer, ForeignKey('sensor_item.id'), nullable=False)
 
-class Attachment(Base):
+class AttachmentModel(Base):
     __tablename__ = 'attachment'
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(100), nullable=False)
     description = Column(String(500))
     type = Column(String(50), nullable=False)
     content = Column(String, nullable=False)
-    model_mapping_id = Column(Integer, ForeignKey('modelmapping.id'))
 
-class ModelMapping(Base):
+class ModelMappingModel(Base):
     __tablename__ = 'modelmapping'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    measurement_source_id = Column(Integer, ForeignKey('measurementsource.id'), nullable=False)
-    sensor_item_id = Column(Integer, ForeignKey('sensoritem.id'), nullable=False)
-    model_id = Column(Integer, nullable=False)
-    block_id = Column(Integer, ForeignKey('block.id'), nullable=False)
+    measurement_source_id = Column(Integer, ForeignKey('measurement_source.id'), nullable=False, primary_key=True)
+    sensor_item_id = Column(Integer, ForeignKey('sensor_item.id'), nullable=False, primary_key=True)
+    model_id = Column(Integer, nullable=False, primary_key=True)
+    block_id = Column(Integer, ForeignKey('block.id'), nullable=False, primary_key=True)
+    property_id = Column(Integer, ForeignKey('property.id'), nullable=False, primary_key=True)
 
-    measurement_source = Column(Integer, ForeignKey('measurement_source.id'), primary_key=True)
-    sensor_item = Column(Integer, ForeignKey('sensor_item.id'), nullable=False, primary_key=True)
-    block = Column(Integer, ForeignKey('block.id'), nullable=False, primary_key=True)
-
-class Property(Base):
+class PropertyModel(Base):
     __tablename__ = 'property'
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(100), nullable=False)
     unit = Column(String(100), nullable=False)
 
-class Prediction(Base):
+class PredictionModel(Base):
     __tablename__ = 'prediction'
     insert_ts = Column(Integer, nullable=False)
     m_data = Column(Float, nullable=False)
@@ -94,10 +90,11 @@ class Prediction(Base):
     property = Column(Integer, ForeignKey('property.id'), nullable=False, primary_key=True)
     block = Column(Integer, ForeignKey('block.id'), nullable=False, primary_key=True)
 
-class Block(Base):
+class BlockModel(Base):
     __tablename__ = 'block'
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), nullable=False)
+    active = Column(Boolean, nullable=False)
 
 # НЕОБХОДИМО ПРОПИСАТЬ ОТ SUPER НА СЕРВЕРЕ MYSQL 
 # DELIMITER //
@@ -113,3 +110,16 @@ class Block(Base):
 #     END IF;
 # END//
 # DELIMITER ;
+    
+# Создание экземпляра двигателя
+engine = create_engine('sqlite:///app.db')
+
+# Создание сессии
+Session = sessionmaker(bind=engine)
+session = Session()
+
+# Создание всех таблиц
+Base.metadata.create_all(engine)
+
+# Закрытие сессии
+session.close()

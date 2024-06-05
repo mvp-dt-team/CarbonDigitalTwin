@@ -24,9 +24,6 @@ class Sensor:
         self.name = name
         self.unit = unit
         self.description = description
-        # self.model_name = model_name
-        # self.installation_time = installation_time
-        # self.deactivation_time = deactivation_time
 
 
 class Model:

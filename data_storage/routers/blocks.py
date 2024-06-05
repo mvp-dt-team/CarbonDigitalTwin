@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, UploadFile, File, Body
 from typing import List, Annotated
-from network_models.blocks import AttachmentGet, AttachmentPost, PredictionGet, PredictionPost, PropertyModel, MLModelGet, BlockModelGet, SensorBlockinfo, BlockModelPost
+from network_models.blocks import AttachmentGet, AttachmentPost, PredictionGet, PredictionPost, MLModelGet, BlockModelGet, SensorBlockinfo, BlockModelPost
 from data_storage.mysql_storage import MySQLStorage
 from mysql.connector import IntegrityError
 
@@ -36,8 +36,12 @@ def blocks_router(storage: MySQLStorage):
         return storage.get_model(model_id)
 
     @router.post("/models")
-    async def add_model():
-        storage.add_model()
+    async def add_model(file: UploadFile = File(...), data: AttachmentGet = Body(...)):
+        print(file)
+        if not data.name:
+            raise HTTPException(status_code=400, detail="Name is required.")
+        content = await file.read()
+        storage.add_model(data, content=content)
 
     @router.get("/prediction")
     async def get_predictions(block_ids: Annotated[list[int], Query()] = []) -> List[PredictionGet]:
