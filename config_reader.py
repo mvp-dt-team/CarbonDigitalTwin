@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     DATABASE: str
 
     # Название файла лога для модуля хранения данных
-    STORAGE_LOG_FILENAME: str 
+    STORAGE_LOG_FILENAME: str = "storage_module.log"
     
     # Адрес микросервиса модуля хранения данных
     SMADDRESS: str
@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     POLL_INTERVAL: int
 
     # Название файла лога для модуля опроса датчиков
-    SENSOR_LOG_FILENAME: str
+    SENSOR_LOG_FILENAME: str = "sensors_module.log"
 
     model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
 

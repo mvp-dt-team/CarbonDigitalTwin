@@ -1,3 +1,7 @@
+DROP DATABASE digital_twin_database;
+
+CREATE DATABASE digital_twin_database;
+USE digital_twin_database;
 -- Информация о моделях сенсоров
 CREATE TABLE IF NOT EXISTS sensor
 (
@@ -48,16 +52,6 @@ CREATE TABLE IF NOT EXISTS sensor_params
     FOREIGN KEY (sensor_item_id) REFERENCES sensor_item (id),
     FOREIGN KEY (property_id) REFERENCES measurement_source (id)
 );
--- Информация о измерениях, снятых с датчиков
-CREATE TABLE IF NOT EXISTS raw_data
-(
-    query_id              INT  NOT NULL,
-    m_data                TEXT NOT NULL,
-    measurement_source_id INT  NOT NULL,
-    PRIMARY KEY (query_id, measurement_source_id),
-    FOREIGN KEY (query_id) REFERENCES measurement (query_id),
-    FOREIGN KEY (measurement_source_id) REFERENCES measurement_source (id)
-);
 
 -- Возможные другие данные
 CREATE TABLE IF NOT EXISTS measurement
@@ -71,3 +65,21 @@ CREATE TABLE IF NOT EXISTS measurement
     FOREIGN KEY (sensor_item_id) REFERENCES sensor_item (id),
     FOREIGN KEY (measurement_source_id) REFERENCES measurement_source (id)
 );
+
+-- Информация о измерениях, снятых с датчиков
+CREATE TABLE IF NOT EXISTS raw_data
+(
+    query_id              INT  NOT NULL,
+    m_data                TEXT NOT NULL,
+    measurement_source_id INT  NOT NULL,
+    PRIMARY KEY (query_id, measurement_source_id),
+    FOREIGN KEY (query_id) REFERENCES measurement (query_id),
+    FOREIGN KEY (measurement_source_id) REFERENCES measurement_source (id)
+);
+
+CREATE TABLE IF NOT EXISTS files
+(
+    id          INT PRIMARY KEY AUTO_INCREMENT,
+    description VARCHAR(255)         NOT NULL,
+    path        VARCHAR(255) UNIQUE NOT NULL
+)

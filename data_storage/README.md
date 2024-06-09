@@ -18,3 +18,6 @@ uvicorn data_storage_module:app --reload --port 3000
 Для понимания структуры базы данных модуля смотрите ER-диаграмму:
 
 ![ER Диаграмма](docs/ER_diagram.png)
+
+# Загрузка файлов
+Для примера был создан эндпоинт uploadfile и таблица с файлами в бд, а также [пример их использования](examples/file_upload.py)
