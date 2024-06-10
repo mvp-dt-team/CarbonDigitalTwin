@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query, HTTPException, UploadFile, File, Body
 from typing import List, Annotated
-from network_models.blocks import AttachmentGet, AttachmentPost, PredictionGet, PredictionPost, MLModelGet, BlockModelGet, SensorBlockinfo, BlockModelPost
+from network_models.blocks import AttachmentGet, AttachmentPost, PredictionGet, PredictionPost, MLModelGet, BlockModelGet, SensorBlockinfo, BlockModelPost, PropertyGet, PropertyPost
 from data_storage.mysql_storage import MySQLStorage
 from mysql.connector import IntegrityError
 
@@ -23,9 +23,9 @@ def blocks_router(storage: MySQLStorage):
     # async def toggle_block(block_id: int):
     #     return storage.toggle_block(block_id)
 
-    # @router.post("/")
-    # async def add_block(block_data: BlockModelPost):
-    #     storage.add_block(block_data)
+    @router.post("/")
+    async def add_block(block_data: BlockModelPost):
+        storage.add_block(block_data)
 
     # @router.get("/models", response_model=List[MLModelGet])
     # async def get_model_list():
@@ -81,6 +81,15 @@ def blocks_router(storage: MySQLStorage):
     #                 raise HTTPException(status_code=400, detail="Duplicate entry error. The data might already exist.")
     #             else:
     #                 raise HTTPException(status_code=500, detail="An unexpected error occurred.")
-                
-    return router
+    
+    @router.post("/property")
+    async def add_property(property_data: PropertyPost):
+        storage.add_property(property_data)
 
+    @router.get("/property", response_model=List[PropertyGet])
+    async def get_properties():
+        return storage.get_properties()
+    
+
+
+    return router

@@ -10,7 +10,7 @@ from network_models.measurement_source_info import MeasurementSourceInfoGet, Mea
 from network_models.measurements_info import MeasurementsPost, MeasurementsGet
 from network_models.sensor_model_info import SensorModelInfoPost, SensorModelInfoGet
 from network_models.sensors_info import SensorInfoGet, SensorInfoPost, SensorPropertyGet
-from network_models.blocks import AttachmentGet, AttachmentPost, PredictionGet, PredictionPost, PropertyGet, MLModelGet, BlockModelGet, SensorBlockinfo, BlockModelPost
+from network_models.blocks import AttachmentGet, AttachmentPost, PredictionGet, PredictionPost, PropertyGet, MLModelGet, BlockModelGet, SensorBlockinfo, BlockModelPost, PropertyPost
 
 
 from starlette.responses import FileResponse
@@ -251,7 +251,7 @@ class MySQLStorage():
 
     #     for sensor in block_data.sensors:
     #         for property_id in block_data.properties:
-    #             mapping = ModelMappingModel(measurement_source_id=sensor.measurement_source_id, sensor_item_id=sensor.sensor_item_id, model_id=block_model, block_id=block.id, property_id=property_id)
+    #             mapping = ModelMappingModel(measurement_source_id=sensor.measurement_source_id, sensor_item_id=sensor.sensor_item_id, model_id=block_model, property_id=property_id)
     #             session.add(mapping)
 
     # @sqlalchemy_session(engine_url)
@@ -315,3 +315,20 @@ class MySQLStorage():
     #     #     )
     #     #     session.add(attach)
     #     pass
+    
+    @sqlalchemy_session(engine_url)
+    def add_property(self, property_data: PropertyPost, session: Session):
+        property = PropertyModel(name=property_data.name, unit=property_data.unit)
+        session.add(property)
+
+    @sqlalchemy_session(engine_url)
+    def get_properties(self, session: Session):
+        properties_data = session.query(PropertyModel).all()
+        properties = [
+            PropertyGet(
+                id=property.id,
+                name=property.name,
+                unit=property.unit
+            ) for property in properties_data
+        ]
+        return properties

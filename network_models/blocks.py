@@ -66,3 +66,12 @@ class AttachmentGet(BaseModel):
 
 class AttachmentPost(BaseModel):
     insert_values: List[AttachmentGet]
+
+class PropertyPost(BaseModel):
+    name: str
+    unit: str
+
+class PropertyGet(BaseModel):
+    id: int
+    name: str
+    unit: str
