@@ -81,7 +81,7 @@ class ModelsModel(Base):
     file_id = Column(Integer, ForeignKey('files.id'), nullable=False)
     block_id = Column(Integer, ForeignKey('block.id'), nullable=False)
 
-class FilesModel(Base):
+class FileModel(Base):
     __tablename__ = 'files'
     id = Column(Integer, primary_key=True, autoincrement=True)
     description = Column(VARCHAR(255), nullable=False)

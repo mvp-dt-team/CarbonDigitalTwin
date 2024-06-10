@@ -4,13 +4,13 @@ from mysql.connector import connect
 from sqlalchemy import create_engine, desc
 from functools import wraps
 from sqlalchemy.orm import sessionmaker, Session
-from data_storage.orm import ModelMappingModel, PredictionModel, ModelsModel, PropertyModel, BlockModel, SensorModel, MeasurementSourceModel, SensorItemModel, SensorSourceMappingModel, SensorParamsModel, RawDataModel, MeasurementModel
+from data_storage.orm import FileModel, ModelMappingModel, PredictionModel, ModelsModel, PropertyModel, BlockModel, SensorModel, MeasurementSourceModel, SensorItemModel, SensorSourceMappingModel, SensorParamsModel, RawDataModel, MeasurementModel
 
 from network_models.measurement_source_info import MeasurementSourceInfoGet, MeasurementSourceInfoPost
 from network_models.measurements_info import MeasurementsPost, MeasurementsGet
 from network_models.sensor_model_info import SensorModelInfoPost, SensorModelInfoGet
 from network_models.sensors_info import SensorInfoGet, SensorInfoPost, SensorPropertyGet
-from network_models.blocks import AttachmentGet, AttachmentPost, PredictionGet, PredictionPost, PropertyGet, MLModelGet, BlockModelGet, SensorBlockinfo, BlockModelPost, PropertyPost
+from network_models.blocks import ModelMappingGet, PredictionGet, PredictionPost, PropertyGet, MLModelGet, BlockModelGet, SensorBlockinfo, BlockModelPost, PropertyPost
 
 
 from starlette.responses import FileResponse
@@ -221,9 +221,67 @@ class MySQLStorage():
     ### MLMODULE
 
     @sqlalchemy_session(engine_url)
-    def get_block_list(self, need_active: bool, session):
-        query = session.query(BlockModel).filter(BlockModel.active == need_active)
-        return query.all()
+    def get_block_list(self, need_active: bool, session: Session):
+        blocks_data = session.query(BlockModel).filter(BlockModel.active == need_active).all()
+        blocks = {}
+        for block in blocks_data:
+            block_model = session.query(ModelsModel).filter(ModelsModel.block_id == block.id).first()
+            if block_model is not None:
+                blocks[block] = [
+                    ModelMappingGet(
+                        measurement_source_id=x.measurement_source_id,
+                        sensor_item_id=x.sensor_item_id,
+                        model_id=x.model_id,
+                        property_id=x.property_id
+                    ) for x in session.query(ModelMappingModel).filter(ModelMappingModel.model_id == block_model.id).all()
+                ]
+            else:
+                blocks[block] = ModelMappingGet (
+                                    measurement_source_id=None,
+                                    sensor_item_id=None,
+                                    model_id=None,
+                                    property_id=None
+                                )
+        
+        modelsmapping = []
+
+        for block, content in blocks.items():
+            if content is not list:
+                modelsmapping.append(
+                    BlockModelGet(
+                        id=block.id,
+                        name=block.name,
+                        active=block.active
+                    )
+                )
+            else:
+                sensors = [
+                        SensorBlockinfo(
+                            measurement_source_id=x.measurement_source_id,
+                            sensor_item_id=x.sensor_item_id
+                        ) for x in content
+                    ]
+                model_data = session.query(ModelsModel).filter(ModelsModel.id == content[0].model_id).first()
+                properties_ids = set([x.property_id for x in content])
+                property_data = [session.query(PropertyModel).filter(PropertyModel.id == x).first() for x in properties_ids]
+                modelsmapping.append(
+                    BlockModelGet(
+                        id=block.id,
+                        name=block.name,
+                        sensors=sensors,
+                        model=MLModelGet(name=model_data.name, description=model_data.description),
+                        properties=[
+                            PropertyGet(
+                                id=x.id,
+                                name=x.name,
+                                unit=x.unit
+                            ) for x in property_data
+                        ],
+                        active=block.active
+                    )
+                )
+
+        return modelsmapping
 
     # @sqlalchemy_session(engine_url)
     # def get_block(self, block_id: int, session):
@@ -241,18 +299,18 @@ class MySQLStorage():
     #     block.active = not block.active
     #     session.add(block)
 
-    # @sqlalchemy_session(engine_url)
-    # def add_block(self, block_data: BlockModelPost, session):
-    #     block = BlockModel(name=block_data.name, model_id=block_data.model, active=True)
-    #     session.add(block)
-    #     session.flush()
+    @sqlalchemy_session(engine_url)
+    def add_block(self, block_data: BlockModelPost, session: Session):
+        block = BlockModel(name=block_data.name, active=True)
+        session.add(block)
+        # session.flush()
         
-    #     block_model = block_data.model
+        # block_model = block_data.model
 
-    #     for sensor in block_data.sensors:
-    #         for property_id in block_data.properties:
-    #             mapping = ModelMappingModel(measurement_source_id=sensor.measurement_source_id, sensor_item_id=sensor.sensor_item_id, model_id=block_model, property_id=property_id)
-    #             session.add(mapping)
+        # for sensor in block_data.sensors:
+        #     for property_id in block_data.properties:
+        #         mapping = ModelMappingModel(measurement_source_id=sensor.measurement_source_id, sensor_item_id=sensor.sensor_item_id, model_id=block_model, property_id=property_id)
+        #         session.add(mapping)
 
     # @sqlalchemy_session(engine_url)
     # def get_model_list(self, session):
@@ -332,3 +390,24 @@ class MySQLStorage():
             ) for property in properties_data
         ]
         return properties
+
+    # @sqlalchemy_session(engine_url)
+    # def add_file(self, description: str, file_path: str, session: Session):
+    #     new_file = FileModel(description=description, path=file_path)
+    #     session.add(new_file)
+    #     session.flush()
+    #     logger.info(f"Add new file {new_file}")
+    #     return new_file.id
+
+    @sqlalchemy_session(engine_url)
+    def add_model(self, name: str, description: str, type_model: str, block_id: int, file_path: str, session: Session):
+        new_file = FileModel(description=description, path=file_path)
+        session.add(new_file)
+        session.flush()
+
+        new_model = ModelsModel(name=name, description=description, type=type_model, file_id=new_file.id, block_id=block_id)
+        session.add(new_model)
+        session.flush()
+
+        logger.info(f"Add new model {new_model}")
+        return new_model.id

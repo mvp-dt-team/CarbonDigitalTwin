@@ -4,7 +4,9 @@ from network_models.blocks import AttachmentGet, AttachmentPost, PredictionGet, 
 from data_storage.mysql_storage import MySQLStorage
 from mysql.connector import IntegrityError
 
+import os
 
+UPLOAD_FOLDER='uploads'
 
 def blocks_router(storage: MySQLStorage):
     router = APIRouter(
@@ -90,6 +92,29 @@ def blocks_router(storage: MySQLStorage):
     async def get_properties():
         return storage.get_properties()
     
+    # @router.post("/models")
+    # async def upload_file(description: str = Query(...), file: UploadFile = File(...)):
+    #     file_location = os.path.join(UPLOAD_FOLDER, file.filename)
+    #     with open(file_location, "wb+") as file_object:
+    #         file_object.write(file.file.read())
 
+    #     new_id = storage.add_file(description, file_location)
+
+    #     return {"id": new_id, "filename": file.filename, "description": description}
+
+    @router.post("/models")
+    async def upload_model(name: str = Query(...), description: str = Query(...), type_model: str = Query(...), block_id: int = Query(...), file: UploadFile = File(...)):
+        file_location = os.path.join(UPLOAD_FOLDER, file.filename)
+        with open(file_location, "wb+") as file_object:
+            file_object.write(file.file.read())
+
+        new_id = storage.add_model(name, description, type_model, block_id, file_location)
+
+
+        return {"id": new_id, "filename": file.filename,"name": name, "description": description, "type": type_model, "block": block_id}
+
+    @router.post("/models/params")
+    async def add_block_params():
+        pass
 
     return router
