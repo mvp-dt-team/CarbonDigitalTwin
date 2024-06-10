@@ -4,7 +4,7 @@ from mysql.connector import connect
 from sqlalchemy import create_engine, desc
 from functools import wraps
 from sqlalchemy.orm import sessionmaker, Session
-from data_storage.orm import ModelMappingModel, PredictionModel, AttachmentModel, PropertyModel, BlockModel, SensorModel, MeasurementSourceModel, SensorItemModel, SensorSourceMappingModel, SensorParamsModel, RawDataModel, MeasurementModel
+from data_storage.orm import ModelMappingModel, PredictionModel, ModelsModel, PropertyModel, BlockModel, SensorModel, MeasurementSourceModel, SensorItemModel, SensorSourceMappingModel, SensorParamsModel, RawDataModel, MeasurementModel
 
 from network_models.measurement_source_info import MeasurementSourceInfoGet, MeasurementSourceInfoPost
 from network_models.measurements_info import MeasurementsPost, MeasurementsGet
@@ -49,8 +49,8 @@ def sqlalchemy_session(engine_url):
 
 
 class MySQLStorage():
-    # engine_url = f'mysql+pymysql://{config.USER}:{config.PASSWORD.get_secret_value()}@{config.HOST}:3306/{config.DATABASE}'
-    engine_url = f'sqlite:///app.db'
+    engine_url = f'mysql+pymysql://{config.USER}:{config.PASSWORD.get_secret_value()}@{config.HOST}:3306/{config.DATABASE}'
+    # engine_url = f'sqlite:///app.db'
     # def close(self):
     #     self.mysql_connection.close()
 
@@ -225,93 +225,93 @@ class MySQLStorage():
         query = session.query(BlockModel).filter(BlockModel.active == need_active)
         return query.all()
 
-    @sqlalchemy_session(engine_url)
-    def get_block(self, block_id: int, session):
-        block = session.query(BlockModel).filter(BlockModel.id == block_id).first()
-        if not block:
-            raise HTTPException(status_code=404, detail="Block not found")
-        return block
+    # @sqlalchemy_session(engine_url)
+    # def get_block(self, block_id: int, session):
+    #     block = session.query(BlockModel).filter(BlockModel.id == block_id).first()
+    #     if not block:
+    #         raise HTTPException(status_code=404, detail="Block not found")
+    #     return block
     
-    @sqlalchemy_session(engine_url)
-    def toggle_block(self, block_id: int, session):
-        block = session.query(BlockModel).filter(BlockModel.id == block_id).first()
-        if not block:
-            raise HTTPException(status_code=404, detail="Block not found")
+    # @sqlalchemy_session(engine_url)
+    # def toggle_block(self, block_id: int, session):
+    #     block = session.query(BlockModel).filter(BlockModel.id == block_id).first()
+    #     if not block:
+    #         raise HTTPException(status_code=404, detail="Block not found")
         
-        block.active = not block.active
-        session.add(block)
+    #     block.active = not block.active
+    #     session.add(block)
 
-    @sqlalchemy_session(engine_url)
-    def add_block(self, block_data: BlockModelPost, session):
-        block = BlockModel(name=block_data.name, model_id=block_data.model, active=True)
-        session.add(block)
-        session.flush()
+    # @sqlalchemy_session(engine_url)
+    # def add_block(self, block_data: BlockModelPost, session):
+    #     block = BlockModel(name=block_data.name, model_id=block_data.model, active=True)
+    #     session.add(block)
+    #     session.flush()
         
-        block_model = block_data.model
+    #     block_model = block_data.model
 
-        for sensor in block_data.sensors:
-            for property_id in block_data.properties:
-                mapping = ModelMappingModel(measurement_source_id=sensor.measurement_source_id, sensor_item_id=sensor.sensor_item_id, model_id=block_model, block_id=block.id, property_id=property_id)
-                session.add(mapping)
+    #     for sensor in block_data.sensors:
+    #         for property_id in block_data.properties:
+    #             mapping = ModelMappingModel(measurement_source_id=sensor.measurement_source_id, sensor_item_id=sensor.sensor_item_id, model_id=block_model, block_id=block.id, property_id=property_id)
+    #             session.add(mapping)
 
-    @sqlalchemy_session(engine_url)
-    def get_model_list(self, session):
-        return session.query(AttachmentModel).filter(AttachmentModel.type == 'model').first()
+    # @sqlalchemy_session(engine_url)
+    # def get_model_list(self, session):
+    #     return session.query(AttachmentModel).filter(AttachmentModel.type == 'model').first()
 
-    @sqlalchemy_session(engine_url)
-    def get_model(self, model_id: int, session):
-        model = session.query(AttachmentModel).filter(AttachmentModel.id == model_id).first()
-        if not model:
-            raise HTTPException(status_code=404, detail="Model not found")
+    # @sqlalchemy_session(engine_url)
+    # def get_model(self, model_id: int, session):
+    #     model = session.query(AttachmentModel).filter(AttachmentModel.id == model_id).first()
+    #     if not model:
+    #         raise HTTPException(status_code=404, detail="Model not found")
         
-        return FileResponse(model.content, filename=model.name)
+    #     return FileResponse(model.content, filename=model.name)
 
-    # TODO Развернуть нормально структуру папок для сохранения
-    @sqlalchemy_session(engine_url)
-    def add_model(self, request: AttachmentGet, content, session):
-        file_path = os.path.join(UPLOAD_DIR, request.name)
-        with open(file_path, "wb") as buffer:
-            buffer.write(content)
-        model = AttachmentModel(name=request.name, description=request.description, type=type, content=file_path)
-        session.add(model)
+    # # TODO Развернуть нормально структуру папок для сохранения
+    # @sqlalchemy_session(engine_url)
+    # def add_model(self, request: AttachmentGet, content, session):
+    #     file_path = os.path.join(UPLOAD_DIR, request.name)
+    #     with open(file_path, "wb") as buffer:
+    #         buffer.write(content)
+    #     model = AttachmentModel(name=request.name, description=request.description, type=type, content=file_path)
+    #     session.add(model)
 
-    @sqlalchemy_session(engine_url)
-    def get_predictions(self, block_ids: List[int], session):
-        query = session.query(PredictionModel).filter(PredictionModel.block_id.in_(block_ids))
-        return query.all()
+    # @sqlalchemy_session(engine_url)
+    # def get_predictions(self, block_ids: List[int], session):
+    #     query = session.query(PredictionModel).filter(PredictionModel.block_id.in_(block_ids))
+    #     return query.all()
 
-    @sqlalchemy_session(engine_url)
-    def add_prediction(self, prediction: PredictionGet, insert_ts: datetime, session):
-        pred = PredictionModel(
-            insert_ts=insert_ts,
-            m_data=prediction.m_data,
-            property_id=prediction.property_id,
-            block_id=prediction.block_id
-        )
-        session.add(pred)
+    # @sqlalchemy_session(engine_url)
+    # def add_prediction(self, prediction: PredictionGet, insert_ts: datetime, session):
+    #     pred = PredictionModel(
+    #         insert_ts=insert_ts,
+    #         m_data=prediction.m_data,
+    #         property_id=prediction.property_id,
+    #         block_id=prediction.block_id
+    #     )
+    #     session.add(pred)
 
-    #TODO
-    @sqlalchemy_session(engine_url)
-    def get_attachments(self, block_ids: List[int], session):
-        # query = session.query(AttachmentModel).filter(AttachmentModel.block_id.in_(block_ids))
-        # return query.all()
-        pass
+    # #TODO
+    # @sqlalchemy_session(engine_url)
+    # def get_attachments(self, block_ids: List[int], session):
+    #     # query = session.query(AttachmentModel).filter(AttachmentModel.block_id.in_(block_ids))
+    #     # return query.all()
+    #     pass
 
-    @sqlalchemy_session(engine_url)
-    def get_attachment(self, attachment_id: int, session):
-        attachment = session.query(AttachmentModel).filter(AttachmentModel.id == attachment_id).first()
-        if not attachment:
-            raise HTTPException(status_code=404, detail="Attachment not found")
-        return FileResponse(attachment.content, filename=attachment.name)
+    # @sqlalchemy_session(engine_url)
+    # def get_attachment(self, attachment_id: int, session):
+    #     attachment = session.query(AttachmentModel).filter(AttachmentModel.id == attachment_id).first()
+    #     if not attachment:
+    #         raise HTTPException(status_code=404, detail="Attachment not found")
+    #     return FileResponse(attachment.content, filename=attachment.name)
     
-    #TODO
-    @sqlalchemy_session(engine_url)
-    def add_attachments(self, attachment: AttachmentPost, session):
-        # for att in attachment.insert_values:
-        #     attach = AttachmentModel(
-        #         name=att.name,
-        #         description=att.description,
-        #         type=att.type
-        #     )
-        #     session.add(attach)
-        pass
+    # #TODO
+    # @sqlalchemy_session(engine_url)
+    # def add_attachments(self, attachment: AttachmentPost, session):
+    #     # for att in attachment.insert_values:
+    #     #     attach = AttachmentModel(
+    #     #         name=att.name,
+    #     #         description=att.description,
+    #     #         type=att.type
+    #     #     )
+    #     #     session.add(attach)
+    #     pass

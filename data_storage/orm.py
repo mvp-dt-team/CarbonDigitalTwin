@@ -3,6 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
 from sqlalchemy.sql import text
+from config_reader import config
 
 # Определение базового класса для декларативного стиля
 Base = declarative_base()
@@ -57,22 +58,13 @@ class MeasurementModel(Base):
     measurement_source_id = Column(Integer, ForeignKey('measurement_source.id'), primary_key=True)
     sensor_item_id = Column(Integer, ForeignKey('sensor_item.id'), nullable=False)
 
-class AttachmentModel(Base):
-    __tablename__ = 'attachment'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(100), nullable=False)
-    description = Column(String(500))
-    type = Column(String(50), nullable=False)
-    content = Column(String, nullable=False)
+### MODULE ML
 
-class ModelMappingModel(Base):
-    __tablename__ = 'modelmapping'
+class BlockModel(Base):
+    __tablename__ = 'block'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    measurement_source_id = Column(Integer, ForeignKey('measurement_source.id'), nullable=False, primary_key=True)
-    sensor_item_id = Column(Integer, ForeignKey('sensor_item.id'), nullable=False, primary_key=True)
-    model_id = Column(Integer, nullable=False, primary_key=True)
-    block_id = Column(Integer, ForeignKey('block.id'), nullable=False, primary_key=True)
-    property_id = Column(Integer, ForeignKey('property.id'), nullable=False, primary_key=True)
+    name = Column(String(50), nullable=False)
+    active = Column(Boolean, nullable=False)
 
 class PropertyModel(Base):
     __tablename__ = 'property'
@@ -80,21 +72,36 @@ class PropertyModel(Base):
     name = Column(String(100), nullable=False)
     unit = Column(String(100), nullable=False)
 
+class ModelsModel(Base):
+    __tablename__ = 'models'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(100), nullable=False)
+    description = Column(String(500))
+    type = Column(String(50), nullable=False)
+    file_id = Column(Integer, ForeignKey('files.id'), nullable=False)
+    block_id = Column(Integer, ForeignKey('block.id'), nullable=False)
+
+class FilesModel(Base):
+    __tablename__ = 'files'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    description = Column(VARCHAR(255), nullable=False)
+    path = Column(VARCHAR(255), nullable=False, unique=True)
+
+class ModelMappingModel(Base):
+    __tablename__ = 'model_mapping'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    measurement_source_id = Column(Integer, ForeignKey('measurement_source.id'), nullable=False)
+    sensor_item_id = Column(Integer, ForeignKey('sensor_item.id'), nullable=False)
+    model_id = Column(Integer, ForeignKey('models.id'), nullable=False)
+    property_id = Column(Integer, ForeignKey('property.id'), nullable=False)
+
 class PredictionModel(Base):
     __tablename__ = 'prediction'
     insert_ts = Column(Integer, nullable=False)
     m_data = Column(Float, nullable=False)
     property_id = Column(Integer, ForeignKey('property.id'), nullable=False)
-    block_id = Column(Integer, ForeignKey('block.id'), nullable=False)
+    block_id = Column(Integer, ForeignKey('block.id'), nullable=False, primary_key=True)
 
-    property = Column(Integer, ForeignKey('property.id'), nullable=False, primary_key=True)
-    block = Column(Integer, ForeignKey('block.id'), nullable=False, primary_key=True)
-
-class BlockModel(Base):
-    __tablename__ = 'block'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(50), nullable=False)
-    active = Column(Boolean, nullable=False)
 
 # НЕОБХОДИМО ПРОПИСАТЬ ОТ SUPER НА СЕРВЕРЕ MYSQL 
 # DELIMITER //
@@ -112,7 +119,8 @@ class BlockModel(Base):
 # DELIMITER ;
     
 # Создание экземпляра двигателя
-engine = create_engine('sqlite:///app.db')
+# engine = create_engine('sqlite:///app.db')
+engine = create_engine(f'mysql+pymysql://{config.USER}:{config.PASSWORD.get_secret_value()}@{config.HOST}:3306/{config.DATABASE}')
 
 # Создание сессии
 Session = sessionmaker(bind=engine)

@@ -71,3 +71,64 @@ CREATE TABLE IF NOT EXISTS measurement
     FOREIGN KEY (sensor_item_id) REFERENCES sensor_item (id),
     FOREIGN KEY (measurement_source_id) REFERENCES measurement_source (id)
 );
+
+-- Хранение файлов
+CREATE TABLE IF NOT EXISTS files
+(
+    id          INT PRIMARY KEY AUTO_INCREMENT,
+    description VARCHAR(255)         NOT NULL,
+    path        VARCHAR(255) UNIQUE NOT NULL
+);
+
+-- Связка для моделей и датчиков
+CREATE TABLE IF NOT EXISTS block (
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(50) NOT NULL,
+    active BOOLEAN NOT NULL,
+    PRIMARY KEY (id)
+);
+
+-- Измеряемые свойства продукта
+CREATE TABLE IF NOT EXISTS property (
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    unit VARCHAR(100) NOT NULL,
+    PRIMARY KEY (id)
+);
+
+-- Информация о моделях
+CREATE TABLE IF NOT EXISTS models (
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(500),
+    type VARCHAR(50) NOT NULL,
+    file_id INT NOT NULL,
+    block_id INT NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (file_id) REFERENCES files(id),
+    FOREIGN KEY (block_id) REFERENCES block(id)
+);
+
+-- Связка для моделей и датчиков
+CREATE TABLE IF NOT EXISTS model_mapping (
+    id INT NOT NULL AUTO_INCREMENT,
+    measurement_source_id INT NOT NULL,
+    sensor_item_id INT NOT NULL,
+    model_id INT NOT NULL,
+    property_id INT NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (measurement_source_id) REFERENCES measurement_source(id),
+    FOREIGN KEY (sensor_item_id) REFERENCES sensor_item(id),
+    FOREIGN KEY (model_id) REFERENCES models(id),
+    FOREIGN KEY (property_id) REFERENCES property(id)
+);
+
+-- Предсказания, сделанные моделью
+CREATE TABLE IF NOT EXISTS prediction (
+    insert_ts INT NOT NULL,
+    m_data FLOAT NOT NULL,
+    property_id INT NOT NULL,
+    block_id INT NOT NULL,
+    FOREIGN KEY (property_id) REFERENCES property(id),
+    FOREIGN KEY (block_id) REFERENCES block(id)
+);
