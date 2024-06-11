@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Query, HTTPException, UploadFile, File, Form
+from starlette.responses import FileResponse
 from typing import List, Annotated
 from network_models.blocks import (
     AttachmentGet,
@@ -11,6 +12,7 @@ from network_models.blocks import (
     BlockModelPost,
     PropertyGet,
     PropertyPost,
+    PredictionMassivePost,
 )
 from data_storage.mysql_storage import MySQLStorage
 from mysql.connector import IntegrityError
@@ -33,9 +35,14 @@ def blocks_router(storage: MySQLStorage):
     # async def get_block(block_id: int):
     #     return storage.get_block(block_id)
 
-    # @router.patch("/{block_id}")
-    # async def toggle_block(block_id: int):
-    #     return storage.toggle_block(block_id)
+    @router.patch("/{block_id}")
+    async def toggle_block(block_id: int):
+        response = storage.toggle_block(block_id)
+        if response["status_code"] != 200:
+            raise HTTPException(
+                status_code=response["status_code"], detail=response["detail"]
+            )
+        return response
 
     @router.post("/")
     async def add_block(block_data: BlockModelPost):
@@ -45,9 +52,23 @@ def blocks_router(storage: MySQLStorage):
     # async def get_model_list():
     #     return storage.get_model_list()
 
-    # @router.get("/models/{model_id}")
-    # async def get_model(model_id: int):
-    #     return storage.get_model(model_id)
+    @router.get("/models/{model_id}")
+    async def get_model(model_id: int):
+        response = storage.get_model(model_id)
+        if response["status_code"] != 200:
+            raise HTTPException(
+                status_code=response["status_code"], detail=response["detail"]
+            )
+
+        return FileResponse(
+            status_code=response["status_code"],
+            path=response["file_path"],
+            headers={
+                "MODEL_NAME": response["name"],
+                "MODEL_DESCRIPTION": response["description"],
+            },
+            filename=response["file_path"].split("/")[-1],
+        )
 
     # @router.post("/models")
     # async def add_model(file: UploadFile = File(...), data: AttachmentGet = Body(...)):
@@ -57,22 +78,33 @@ def blocks_router(storage: MySQLStorage):
     #     content = await file.read()
     #     storage.add_model(data, content=content)
 
-    # @router.get("/prediction")
-    # async def get_predictions(block_ids: Annotated[list[int], Query()] = []) -> List[PredictionGet]:
-    #     if len(block_ids) == 0:
-    #         raise HTTPException(status_code=400, detail="Indicate the blocks")
-    #     return storage.get_predictions(block_ids)
+    @router.get("/prediction")
+    async def get_predictions(
+        block_id: int = Query(...), n_predictions: int = Query(...)
+    ) -> List[PredictionGet]:
+        response = storage.get_predictions(block_id, n_predictions)
+        if type(response) is dict and response.get("status_code") != 200:
+            raise HTTPException(
+                status_code=response["status_code"], detail=response["detail"]
+            )
+        return response
 
-    # @router.post("/")
-    # async def add_prediction(request: PredictionPost):
-    #     for prediction in request.insert_values:
-    #         try:
-    #             storage.add_prediction(prediction, request.insert_ts)
-    #         except IntegrityError as e:
-    #             if "Duplicate entry" in str(e):
-    #                 raise HTTPException(status_code=400, detail="Duplicate entry error. The data might already exist.")
-    #             else:
-    #                 raise HTTPException(status_code=500, detail="An unexpected error occurred.")
+    @router.post("/prediction")
+    async def add_prediction(request: PredictionMassivePost):
+
+        for prediction in request.insert_values:
+            try:
+                storage.add_prediction(prediction, request.insert_ts)
+            except IntegrityError as e:
+                if "Duplicate entry" in str(e):
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Duplicate entry error. The data might already exist.",
+                    )
+                else:
+                    raise HTTPException(
+                        status_code=500, detail="An unexpected error occurred."
+                    )
 
     # @router.get("/attachments")
     # async def get_attachments(block_ids: Annotated[list[int], Query()] = []) -> List[AttachmentGet]:

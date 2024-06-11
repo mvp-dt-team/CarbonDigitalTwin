@@ -47,6 +47,7 @@ class BlockModelPost(BaseModel):
 
 
 class PredictionGet(BaseModel):
+    id: int
     insert_ts: int
     m_data: float
     property_id: int
@@ -54,8 +55,14 @@ class PredictionGet(BaseModel):
 
 
 class PredictionPost(BaseModel):
+    m_data: float
+    property_id: int
+    block_id: int
+
+
+class PredictionMassivePost(BaseModel):
     insert_ts: datetime
-    insert_values: List[PredictionGet]
+    insert_values: List[PredictionPost]
 
 
 class AttachmentGet(BaseModel):

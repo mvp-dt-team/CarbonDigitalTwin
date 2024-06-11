@@ -88,7 +88,7 @@ class MeasurementModel(Base):
 
 
 class BlockModel(Base):
-    __tablename__ = "blocks"
+    __tablename__ = "block"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), nullable=False)
     active = Column(Boolean, nullable=False)
@@ -131,10 +131,11 @@ class ModelMappingModel(Base):
 
 class PredictionModel(Base):
     __tablename__ = "prediction"
-    insert_ts = Column(Integer, nullable=False)
+    id = Column(Integer, nullable=False, primary_key=True, autoincrement=True)
+    insert_ts = Column(Integer, nullable=False, primary_key=True)
     m_data = Column(Float, nullable=False)
     property_id = Column(Integer, ForeignKey("property.id"), nullable=False)
-    block_id = Column(Integer, ForeignKey("block.id"), nullable=False, primary_key=True)
+    block_id = Column(Integer, ForeignKey("block.id"), nullable=False)
 
 
 # НЕОБХОДИМО ПРОПИСАТЬ ОТ SUPER НА СЕРВЕРЕ MYSQL

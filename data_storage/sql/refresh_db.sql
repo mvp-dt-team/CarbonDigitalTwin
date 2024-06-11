@@ -127,10 +127,12 @@ CREATE TABLE IF NOT EXISTS model_mapping (
 
 -- Предсказания, сделанные моделью
 CREATE TABLE IF NOT EXISTS prediction (
+    id INT NOT NULL AUTO_INCREMENT,
     insert_ts INT NOT NULL,
     m_data FLOAT NOT NULL,
     property_id INT NOT NULL,
     block_id INT NOT NULL,
+    PRIMARY KEY (id),
     FOREIGN KEY (property_id) REFERENCES property(id),
-    FOREIGN KEY (block_id) REFERENCES blocks(id)
+    FOREIGN KEY (block_id) REFERENCES block(id)
 );

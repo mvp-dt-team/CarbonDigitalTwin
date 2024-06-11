@@ -15,6 +15,7 @@ from data_storage.orm import (
     SensorSourceMappingModel,
     SensorParamsModel,
     MeasurementModel,
+    PredictionModel,
 )
 
 from network_models.measurement_source_info import (
@@ -32,6 +33,8 @@ from network_models.blocks import (
     SensorBlockinfo,
     BlockModelPost,
     PropertyPost,
+    PredictionGet,
+    PredictionPost,
 )
 
 
@@ -412,6 +415,7 @@ class MySQLStorage:
         )
         return new_model.id
 
+    # TODO Скорее всего не нужно
     # @sqlalchemy_session(engine_url)
     # def get_block(self, block_id: int, session):
     #     block = session.query(BlockModel).filter(BlockModel.id == block_id).first()
@@ -419,39 +423,52 @@ class MySQLStorage:
     #         raise HTTPException(status_code=404, detail="Block not found")
     #     return block
 
-    # @sqlalchemy_session(engine_url)
-    # def toggle_block(self, block_id: int, session):
-    #     block = session.query(BlockModel).filter(BlockModel.id == block_id).first()
-    #     if not block:
-    #         raise HTTPException(status_code=404, detail="Block not found")
+    @sqlalchemy_session(engine_url)
+    def toggle_block(self, block_id: int, session):
+        block = session.query(BlockModel).filter(BlockModel.id == block_id).first()
+        print(block)
+        if not block:
+            return {"status_code": 404, "detail": "Block not found"}
 
-    #     block.active = not block.active
-    #     session.add(block)
+        block.active = not block.active
+        session.add(block)
+        return {
+            "status_code": 200,
+            "detail": "Block toggled",
+            "current_status": block.active,
+        }
 
     @sqlalchemy_session(engine_url)
     def add_block(self, block_data: BlockModelPost, session: Session):
         block = BlockModel(name=block_data.name, active=True)
         session.add(block)
-        # session.flush()
 
-        # block_model = block_data.model
-
-        # for sensor in block_data.sensors:
-        #     for property_id in block_data.properties:
-        #         mapping = ModelMappingModel(measurement_source_id=sensor.measurement_source_id, sensor_item_id=sensor.sensor_item_id, model_id=block_model, property_id=property_id)
-        #         session.add(mapping)
-
+    # TODO Скорее всего не нужно
     # @sqlalchemy_session(engine_url)
     # def get_model_list(self, session):
     #     return session.query(AttachmentModel).filter(AttachmentModel.type == 'model').first()
 
-    # @sqlalchemy_session(engine_url)
-    # def get_model(self, model_id: int, session):
-    #     model = session.query(AttachmentModel).filter(AttachmentModel.id == model_id).first()
-    #     if not model:
-    #         raise HTTPException(status_code=404, detail="Model not found")
+    @sqlalchemy_session(engine_url)
+    def get_model(self, model_id: int, session):
+        model: ModelsModel = (
+            session.query(ModelsModel).filter(ModelsModel.id == model_id).first()
+        )
+        if not model:
+            return {"status_code": 404, "detail": "Model not found"}
+        file: FileModel = (
+            session.query(FileModel).filter(FileModel.id == model.file_id).first()
+        )
+        if not file:
+            return {"status_code": 404, "detail": "Model file not found"}
 
-    #     return FileResponse(model.content, filename=model.name)
+        return {
+            "status_code": 200,
+            "detail": "Ok",
+            "file_path": file.path,
+            "name": model.name,
+            "description": model.description,
+        }
+        # return FileResponse(model.content, filename=model.name)
 
     # # TODO Развернуть нормально структуру папок для сохранения
     # @sqlalchemy_session(engine_url)
@@ -462,20 +479,37 @@ class MySQLStorage:
     #     model = AttachmentModel(name=request.name, description=request.description, type=type, content=file_path)
     #     session.add(model)
 
-    # @sqlalchemy_session(engine_url)
-    # def get_predictions(self, block_ids: List[int], session):
-    #     query = session.query(PredictionModel).filter(PredictionModel.block_id.in_(block_ids))
-    #     return query.all()
+    @sqlalchemy_session(engine_url)
+    def get_predictions(self, block_id: int, n_predictions: int, session: Session):
+        predictions_data = (
+            session.query(PredictionModel)
+            .filter(PredictionModel.block_id == block_id)
+            .order_by(desc(PredictionModel.id))
+            .limit(n_predictions)
+            .all()
+        )
+        print(len(predictions_data))
+        predictions = [
+            PredictionGet(
+                id=prediction.id,
+                insert_ts=prediction.insert_ts,
+                m_data=prediction.m_data,
+                property_id=prediction.property_id,
+                block_id=prediction.block_id,
+            )
+            for prediction in predictions_data
+        ]
+        return predictions
 
-    # @sqlalchemy_session(engine_url)
-    # def add_prediction(self, prediction: PredictionGet, insert_ts: datetime, session):
-    #     pred = PredictionModel(
-    #         insert_ts=insert_ts,
-    #         m_data=prediction.m_data,
-    #         property_id=prediction.property_id,
-    #         block_id=prediction.block_id
-    #     )
-    #     session.add(pred)
+    @sqlalchemy_session(engine_url)
+    def add_prediction(self, prediction: PredictionPost, insert_ts: datetime, session):
+        pred = PredictionModel(
+            insert_ts=int(insert_ts.timestamp()),
+            m_data=prediction.m_data,
+            property_id=prediction.property_id,
+            block_id=prediction.block_id,
+        )
+        session.add(pred)
 
     # #TODO
     # @sqlalchemy_session(engine_url)
