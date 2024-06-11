@@ -4,7 +4,6 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from .sensors_info import SensorInfoGet
 
 from fastapi import FastAPI, File, Body, UploadFile, Request
 from pydantic import BaseModel, model_validator
@@ -16,7 +15,6 @@ import json
 class PropertyGet(BaseModel):
     id: Optional[int] = None
     name: str
-    description: Optional[str] = None
     unit: str
 
 class MLModelGet(BaseModel):
@@ -24,17 +22,17 @@ class MLModelGet(BaseModel):
     name: str
     description: Optional[str] = None
 
-class BlockModelGet(BaseModel):
-    id: int
-    name: str
-    sensors: List[SensorInfoGet] = None 
-    model: MLModelGet = None 
-    properties: List[PropertyGet] = None 
-    active: bool
-
 class SensorBlockinfo(BaseModel):
     measurement_source_id: int
     sensor_item_id: int
+
+class BlockModelGet(BaseModel):
+    id: int
+    name: str
+    sensors: List[SensorBlockinfo] = None 
+    model: MLModelGet = None 
+    properties: List[PropertyGet] = None 
+    active: bool
 
 class BlockModelPost(BaseModel):
 	name: str
@@ -71,10 +69,6 @@ class PropertyPost(BaseModel):
     name: str
     unit: str
 
-class PropertyGet(BaseModel):
-    id: int
-    name: str
-    unit: str
 
 class ModelMappingGet(BaseModel):
     measurement_source_id: Optional[int] = None
