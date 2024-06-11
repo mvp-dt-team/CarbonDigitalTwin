@@ -3,6 +3,7 @@ from typing import List
 from network_models.sensor_model_info import SensorModelInfoGet, SensorModelInfoPost
 from data_storage.mysql_storage import MySQLStorage
 
+
 def get_sensor_models_router(storage: MySQLStorage):
     router = APIRouter(
         tags=["Модели датчиков"],

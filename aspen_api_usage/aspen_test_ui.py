@@ -10,7 +10,9 @@ def process_number():
         output_number2 = input_number * 3
         # Обновляем метки результатов
         result_label1.config(text=f"Флегмовое число: {output_number1}")
-        result_label2.config(text=f"Отношение кубового потока к сырьевому потоку: {output_number2}")
+        result_label2.config(
+            text=f"Отношение кубового потока к сырьевому потоку: {output_number2}"
+        )
     except ValueError:
         # Обработка случая, когда введено не число
         result_label1.config(text="Ошибка: введите число")

@@ -10,8 +10,8 @@ class Settings(BaseSettings):
     DATABASE: str
 
     # Название файла лога для модуля хранения данных
-    STORAGE_LOG_FILENAME: str 
-    
+    STORAGE_LOG_FILENAME: str
+
     # Адрес микросервиса модуля хранения данных
     SMADDRESS: str
 
@@ -20,14 +20,14 @@ class Settings(BaseSettings):
 
     # Адрес для подключения по modbus tcp
     MODBASTCP: str
-    
+
     # Интервал опроса датчиков
     POLL_INTERVAL: int
 
     # Название файла лога для модуля опроса датчиков
     SENSOR_LOG_FILENAME: str
 
-    model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 
 config = Settings()

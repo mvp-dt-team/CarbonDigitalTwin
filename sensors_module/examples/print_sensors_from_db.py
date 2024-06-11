@@ -3,15 +3,15 @@ from sensors_module.sensors.modbus_sensor.sensor import ModbusSensor
 from data_storage.mysql_storage import MySQLStorage
 
 # Настройки COM-порта
-com_port = 'COM2'
+com_port = "COM2"
 baud_rate = 115200
 # Настройки Modbus
 
 # Настройки MySQL
-mysql_host = 'localhost'
-mysql_user = 'digital_twin'
-mysql_password = 'digital_twin'
-mysql_database = 'digital_twin_database'
+mysql_host = "localhost"
+mysql_user = "digital_twin"
+mysql_password = "digital_twin"
+mysql_database = "digital_twin_database"
 
 connection = ModbusRTUClient(com_port, baud_rate, 5)
 connection.connect()

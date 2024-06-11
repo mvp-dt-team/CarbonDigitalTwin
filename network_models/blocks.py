@@ -12,58 +12,68 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 import json
 
+
 class PropertyGet(BaseModel):
     id: Optional[int] = None
     name: str
     unit: str
+
 
 class MLModelGet(BaseModel):
     id: Optional[int] = None
     name: str
     description: Optional[str] = None
 
+
 class SensorBlockinfo(BaseModel):
     measurement_source_id: int
     sensor_item_id: int
 
+
 class BlockModelGet(BaseModel):
     id: int
     name: str
-    sensors: List[SensorBlockinfo] = None 
-    model: MLModelGet = None 
-    properties: List[PropertyGet] = None 
+    sensors: List[SensorBlockinfo] = None
+    model: MLModelGet = None
+    properties: List[PropertyGet] = None
     active: bool
 
+
 class BlockModelPost(BaseModel):
-	name: str
-	# sensors: List[SensorBlockinfo]
-	# model: Optional[int] = None
-	# properties: List[int]
-     
+    name: str
+    # sensors: List[SensorBlockinfo]
+    # model: Optional[int] = None
+    # properties: List[int]
+
+
 class PredictionGet(BaseModel):
     insert_ts: int
     m_data: float
     property_id: int
     block_id: int
 
+
 class PredictionPost(BaseModel):
     insert_ts: datetime
     insert_values: List[PredictionGet]
+
 
 class AttachmentGet(BaseModel):
     name: str
     description: str
     type: str
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     @classmethod
     def validate_to_json(cls, value):
         if isinstance(value, str):
             return cls(**json.loads(value))
         return value
 
+
 class AttachmentPost(BaseModel):
     insert_values: List[AttachmentGet]
+
 
 class PropertyPost(BaseModel):
     name: str

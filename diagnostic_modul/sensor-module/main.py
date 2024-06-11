@@ -3,29 +3,36 @@ import os
 import requests
 import json
 from config_reader import config
+
 sources = []
 
-url = f'{config.SMADDRESS}'
+url = f"{config.SMADDRESS}"
 
-getting_sources = requests.get(f'http://{url}/camera')
+getting_sources = requests.get(f"http://{url}/camera")
 if getting_sources.ok:
     sources_json = json.loads(getting_sources.text)
     for camera in sources_json:
         print(camera)
-        sources.append(Source(id=int(camera['id']), address=camera['ip'], description=camera['description']))
+        sources.append(
+            Source(
+                id=int(camera["id"]),
+                address=camera["ip"],
+                description=camera["description"],
+            )
+        )
 else:
-    raise ConnectionError('Нет подключения к серверу')
+    raise ConnectionError("Нет подключения к серверу")
 
-print(os.path.abspath('./data/videos/test-video-1.mp4'))
+print(os.path.abspath("./data/videos/test-video-1.mp4"))
 
 models = {}
 
 for camera in sources:
-    getting_model = requests.get(f'http://{url}/camera/{camera.id}/model')
+    getting_model = requests.get(f"http://{url}/camera/{camera.id}/model")
     if getting_model.ok:
-        with open(f'model_{camera.id}.pt', 'wb') as f:
+        with open(f"model_{camera.id}.pt", "wb") as f:
             f.write(getting_model.content)
-        models[camera.id] = Model(path=os.path.abspath(f'model_{camera.id}.pt'))
+        models[camera.id] = Model(path=os.path.abspath(f"model_{camera.id}.pt"))
         print("Модель сохранена успешно.")
     else:
         print("Ошибка при получении модели:", getting_model.status_code)
@@ -39,4 +46,3 @@ for camera in sources:
     test_handler.add_source_model_mapping(source=camera, model=models[camera.id])
 
 test_handler.run()
-

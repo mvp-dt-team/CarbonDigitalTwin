@@ -65,12 +65,11 @@ data_types = {
     "TEMP_MELT_IN": "DOUBLE",
     "TEMP_MELT_OUT": "DOUBLE",
     "P_IN": "DOUBLE",
-    "P_OUT": "DOUBLE"
+    "P_OUT": "DOUBLE",
 }
 
 conn_str = (
-    r'DRIVER={Driver do Microsoft Access (*.mdb)};'
-    r'DBQ=D:\Twin14z\db\TWIN14Z_DB.mdb;'
+    r"DRIVER={Driver do Microsoft Access (*.mdb)};" r"DBQ=D:\Twin14z\db\TWIN14Z_DB.mdb;"
 )
 
 cnxn = pyodbc.connect(conn_str)
@@ -79,8 +78,8 @@ crsr = cnxn.cursor()
 try:
     while True:
         # Собираем случайные данные для всех столбцов
-        columns = ', '.join(data_types.keys())
-        placeholders = ', '.join('?' for _ in data_types)
+        columns = ", ".join(data_types.keys())
+        placeholders = ", ".join("?" for _ in data_types)
         values = [generate_random_value(data_types[col]) for col in data_types]
 
         # SQL запрос для вставки данных

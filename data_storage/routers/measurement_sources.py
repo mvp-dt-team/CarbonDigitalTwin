@@ -1,7 +1,11 @@
 from fastapi import APIRouter
 from typing import List
-from network_models.measurement_source_info import MeasurementSourceInfoGet, MeasurementSourceInfoPost
+from network_models.measurement_source_info import (
+    MeasurementSourceInfoGet,
+    MeasurementSourceInfoPost,
+)
 from data_storage.mysql_storage import MySQLStorage
+
 
 def get_measurement_sources_router(storage: MySQLStorage):
     router = APIRouter(

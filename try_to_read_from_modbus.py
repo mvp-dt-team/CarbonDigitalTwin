@@ -7,7 +7,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 # Настройки COM-порта
-com_port = 'COM2'  # Укажите ваш COM-порт
+com_port = "COM2"  # Укажите ваш COM-порт
 baud_rate = 9600
 
 # Настройки Modbus
@@ -16,7 +16,8 @@ modbus_register_address = 0x01  # Адрес регистра, который в
 
 # Инициализация Modbus клиента
 modbus_client = ModbusClient.ModbusSerialClient(
-    method='rtu', port=com_port, baudrate=baud_rate, timeout=5)
+    method="rtu", port=com_port, baudrate=baud_rate, timeout=5
+)
 c = modbus_client.connect()
 
 # # Инициализация MySQL соединения
@@ -37,15 +38,15 @@ else:
         # Чтение данных по протоколу Modbus
         print("read_holding_registers")
         modbus_response = modbus_client.read_holding_registers(
-            modbus_register_address, count=5, slave=modbus_address)
+            modbus_register_address, count=5, slave=modbus_address
+        )
         if modbus_response.isError():
             print("Error reading register!")
             print(modbus_response)
         else:
             print("try ti decode")
             print(modbus_response.registers)
-            print("Register value:",
-                  modbus_response.registers[modbus_register_address])
+            print("Register value:", modbus_response.registers[modbus_register_address])
         # # Запись данных в MySQL
         # sql_query = "INSERT INTO your_table_name (com_port_data, modbus_data) VALUES (%s, %s)"
         # sql_data = (data_from_com_port, modbus_data)

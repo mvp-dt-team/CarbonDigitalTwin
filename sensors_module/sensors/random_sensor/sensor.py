@@ -7,7 +7,8 @@ from sensors_module.sensors.property import Property
 from sensors_module.sensors.sensor import Sensor
 from sensors_module.sensors.unit import Unit, get_unit_from_str
 
-logger = logging.getLogger('RandomSensor')
+logger = logging.getLogger("RandomSensor")
+
 
 class RandomSensor(Sensor):
     @classmethod
@@ -22,19 +23,17 @@ class RandomSensor(Sensor):
         super().__init__(title, id, properties)
 
     @classmethod
-    def from_network(cls, sensor: SensorInfoPost) -> 'Sensor':
+    def from_network(cls, sensor: SensorInfoPost) -> "Sensor":
         properties = {
-
-            prop['measurement_source_id']: Property(
-                id=prop['measurement_source_id'],
-
-                name=prop['name'],
-                unit=get_unit_from_str(prop['unit']),
+            prop["measurement_source_id"]: Property(
+                id=prop["measurement_source_id"],
+                name=prop["name"],
+                unit=get_unit_from_str(prop["unit"]),
             )
-            for prop in sensor['properties']
+            for prop in sensor["properties"]
         }
 
-        return RandomSensor(sensor['id'], sensor['id'], properties)
+        return RandomSensor(sensor["id"], sensor["id"], properties)
 
     def read_all_properties(self) -> Dict[int, Any]:
         prop_values = {}

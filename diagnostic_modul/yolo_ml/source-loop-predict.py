@@ -5,6 +5,7 @@ import numpy as np
 from matplotlib import cm
 import pandas as pd
 
+
 def loop_predict(video_path, model_path, gif_path, csv_path):
 
     # Load the YOLOv8 model
@@ -30,7 +31,7 @@ def loop_predict(video_path, model_path, gif_path, csv_path):
 
             # Visualize the results on the frame
             annotated_frame = results[0].plot()
-            
+
             if count % 30 == 0:
                 frames.append(annotated_frame)
 
@@ -51,13 +52,20 @@ def loop_predict(video_path, model_path, gif_path, csv_path):
     frames_image = []
     for i in frames[1:]:
         frames_image.append(Image.fromarray(np.uint8(i)))
-    im.save(gif_path, save_all=True, append_images=frames_image, optimize=True,
-        duration=1, loop=True)
+    im.save(
+        gif_path,
+        save_all=True,
+        append_images=frames_image,
+        optimize=True,
+        duration=1,
+        loop=True,
+    )
 
     df = pd.DataFrame(data=pandas_data)
     df.to_csv(csv_path)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     video_path1 = "test/WEB_light.mp4"
     model_path1 = "YOLO8l_best.pt"
     gif_path1 = "YOLO8l_result_light.gif"

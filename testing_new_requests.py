@@ -1,27 +1,19 @@
 import requests
 import json
 
-data_storage_address = 'http://localhost:3000'
-url = data_storage_address + '/measurement'
+data_storage_address = "http://localhost:3000"
+url = data_storage_address + "/measurement"
 
 data = {
-    "insert_ts": '2024-03-31 15:44:54.179336',
+    "insert_ts": "2024-03-31 15:44:54.179336",
     "insert_values": [
-        {
-            "m_data": 26.5,
-            "sensor_item_id": 1,
-            "measurement_source_id": 1
-        },
-        {
-            "m_data": 27.3,
-            "sensor_item_id": 2,
-            "measurement_source_id": 2
-        }
-    ]
+        {"m_data": 26.5, "sensor_item_id": 1, "measurement_source_id": 1},
+        {"m_data": 27.3, "sensor_item_id": 2, "measurement_source_id": 2},
+    ],
 }
 
 # Заголовки запроса
-headers = {'Content-Type': 'application/json'}
+headers = {"Content-Type": "application/json"}
 
 
 # Отправка POST-запроса
@@ -36,7 +28,9 @@ def fetch_data(url: str):
     try:
         measurement_source_ids = [1]
 
-        response = requests.get(url, params={'measurement_source_ids': measurement_source_ids})
+        response = requests.get(
+            url, params={"measurement_source_ids": measurement_source_ids}
+        )
 
         response.raise_for_status()  # Это вызовет исключение для кодов состояния 4xx/5xx
         data = response.json()

@@ -16,7 +16,7 @@ class ModbusDataType(Enum):
 
 
 def modbus_data_type_from_str(value: str) -> ModbusDataType:
-    if value == 'int16':
+    if value == "int16":
         return ModbusDataType.INT16
     return ModbusDataType.INT16
 

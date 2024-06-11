@@ -12,6 +12,7 @@ import cv2
     cut_video('input_video.mp4', 'output_segment', 3)
 """
 
+
 def cut_video(input_video, output_prefix, num_segments):
     # Открываем видеофайл
     cap = cv2.VideoCapture(input_video)
@@ -41,7 +42,12 @@ def cut_video(input_video, output_prefix, num_segments):
 
         # Сохраняем сегмент как новый видеофайл
         output_file = f"{output_prefix}_{i}.mp4"
-        out = cv2.VideoWriter(output_file, cv2.VideoWriter_fourcc(*'mp4v'), cap.get(cv2.CAP_PROP_FPS), (frames[0].shape[1], frames[0].shape[0]))
+        out = cv2.VideoWriter(
+            output_file,
+            cv2.VideoWriter_fourcc(*"mp4v"),
+            cap.get(cv2.CAP_PROP_FPS),
+            (frames[0].shape[1], frames[0].shape[0]),
+        )
         for frame in frames:
             out.write(frame)
         out.release()
@@ -52,10 +58,13 @@ def cut_video(input_video, output_prefix, num_segments):
     # Освобождаем ресурсы
     cap.release()
 
+
 if __name__ == "__main__":
     # Пример использования
-    input_video = r"C:\Users\boiko.k.v\Desktop\boiko\labTest.MOV"  # Путь к исходному видео
-    output_prefix = 'output_segment'  # Префикс для имен выходных файлов
+    input_video = (
+        r"C:\Users\boiko.k.v\Desktop\boiko\labTest.MOV"  # Путь к исходному видео
+    )
+    output_prefix = "output_segment"  # Префикс для имен выходных файлов
     num_segments = 6  # Количество сегментов, на которые нужно разрезать видео
 
     cut_video(input_video, output_prefix, num_segments)

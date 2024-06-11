@@ -4,19 +4,24 @@ import json
 from network_models.measurement_source_info import MeasurementSourceInfo
 from network_models.sensor_model_info import SensorModelInfo
 
-API_BASE_URL = 'http://localhost:3000'
+API_BASE_URL = "http://localhost:3000"
 
 
 def print_json(data):
     print(json.dumps(data, indent=2, ensure_ascii=False))
 
 
-def execute_api_request(method: str, url: str, data=None, success_message: str = None,
-                        error_message: str = "Ошибка при выполнении запроса"):
+def execute_api_request(
+    method: str,
+    url: str,
+    data=None,
+    success_message: str = None,
+    error_message: str = "Ошибка при выполнении запроса",
+):
     try:
-        if method.upper() == 'GET':
+        if method.upper() == "GET":
             response = requests.get(url)
-        elif method.upper() == 'POST':
+        elif method.upper() == "POST":
             print("Данные, которые будут отправлены:")
             print_json(data)
             confirm = input("Подтвердите отправку (да/нет): ")
@@ -31,7 +36,7 @@ def execute_api_request(method: str, url: str, data=None, success_message: str =
 
         if response.status_code in [200, 201]:
             print(success_message if success_message else "Успешно.")
-            if response.content and response.content.decode('utf-8') != 'null':
+            if response.content and response.content.decode("utf-8") != "null":
                 print_json(response.json())
         else:
             print(error_message, " код ответа: ", response.status_code)
@@ -40,8 +45,11 @@ def execute_api_request(method: str, url: str, data=None, success_message: str =
 
 
 def get_measurement_sources():
-    execute_api_request('GET', f"{API_BASE_URL}/measurement_source",
-                        success_message="Список источников измерений получен успешно.")
+    execute_api_request(
+        "GET",
+        f"{API_BASE_URL}/measurement_source",
+        success_message="Список источников измерений получен успешно.",
+    )
 
 
 def add_measurement_source():
@@ -50,16 +58,22 @@ def add_measurement_source():
     description = input("Введите описание (можно пропустить): ")
     unit = input("Введите единицу измерения: ")
 
-    source = MeasurementSourceInfo(name=name, description=description, unit=unit).dict(exclude_none=True)
-    execute_api_request('POST', f"{API_BASE_URL}/measurement_source", data=source,
-                        success_message="Источник измерений добавлен успешно.")
+    source = MeasurementSourceInfo(name=name, description=description, unit=unit).dict(
+        exclude_none=True
+    )
+    execute_api_request(
+        "POST",
+        f"{API_BASE_URL}/measurement_source",
+        data=source,
+        success_message="Источник измерений добавлен успешно.",
+    )
 
 
 def get_sensor_models():
     execute_api_request(
-        'GET',
+        "GET",
         f"{API_BASE_URL}/sensor_model",
-        success_message="Список моделей датчиков получен успешно."
+        success_message="Список моделей датчиков получен успешно.",
     )
 
 
@@ -71,23 +85,28 @@ def add_sensor_model():
     model = SensorModelInfo(name=name, description=description)
 
     execute_api_request(
-        'POST',
+        "POST",
         f"{API_BASE_URL}/sensor_model",
         data=model.dict(exclude_none=True),
-        success_message="Модель датчика добавлена успешно."
+        success_message="Модель датчика добавлена успешно.",
     )
 
 
 actions = [
-    {"name": "Получить список источников измерений", "function": get_measurement_sources},
+    {
+        "name": "Получить список источников измерений",
+        "function": get_measurement_sources,
+    },
     {"name": "Добавить источник измерений", "function": add_measurement_source},
     {"name": "Получить список моделей датчиков", "function": get_sensor_models},
     {"name": "Добавить модель датчика", "function": add_sensor_model},
     {"name": "Отобразить список экземпляров датчиков", "function": None},
     {"name": "Добавить экземпляр датчика", "function": None},
     {"name": "Отобразить последние измерения со всех точек", "function": None},
-    {"name": "Выйти", "function": exit}
+    {"name": "Выйти", "function": exit},
 ]
+
+
 def main_menu():
 
     while True:

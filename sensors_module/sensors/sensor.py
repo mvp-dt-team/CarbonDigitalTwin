@@ -32,7 +32,5 @@ class Sensor(ABC):
 
     @classmethod
     @abstractmethod
-    def from_network(cls, sensor: SensorInfoPost) -> 'Sensor':
+    def from_network(cls, sensor: SensorInfoPost) -> "Sensor":
         pass
-
-

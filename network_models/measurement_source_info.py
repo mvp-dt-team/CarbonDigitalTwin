@@ -9,6 +9,7 @@ class MeasurementSourceInfoGet(BaseModel):
     description: Optional[str] = None
     unit: str
 
+
 class MeasurementSourceInfoPost(BaseModel):
     name: str
     description: Optional[str] = None

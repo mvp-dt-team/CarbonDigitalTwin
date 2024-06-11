@@ -18,7 +18,8 @@ class ModbusRTUClient(Connection):
         if self.is_connected:
             return
         self.modbus_client = ModbusClient.ModbusSerialClient(
-            method='rtu', port=self.port, baudrate=self.baudrate, timeout=self.timeout)
+            method="rtu", port=self.port, baudrate=self.baudrate, timeout=self.timeout
+        )
         self.modbus_client.connect()
 
     def disconnect(self):

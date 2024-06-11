@@ -20,12 +20,19 @@ def get_measurements_router(storage: MySQLStorage):
                 storage.add_measurement(measurement, request.insert_ts)
             except IntegrityError as e:
                 if "Duplicate entry" in str(e):
-                    raise HTTPException(status_code=400, detail="Duplicate entry error. The data might already exist.")
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Duplicate entry error. The data might already exist.",
+                    )
                 else:
-                    raise HTTPException(status_code=500, detail="An unexpected error occurred.")
+                    raise HTTPException(
+                        status_code=500, detail="An unexpected error occurred."
+                    )
 
     @router.get("/")
-    async def get_measurements(measurement_source_ids: Annotated[list[int], Query()] = []) -> List[MeasurementsGet]:
+    async def get_measurements(
+        measurement_source_ids: Annotated[list[int], Query()] = []
+    ) -> List[MeasurementsGet]:
         if len(measurement_source_ids) == 0:
             raise HTTPException(status_code=400, detail="Indicate the sources")
         return storage.get_last_three_measurements_for_sources(measurement_source_ids)

@@ -1,28 +1,49 @@
 from datetime import datetime
 from typing import List
-from mysql.connector import connect
 from sqlalchemy import create_engine, desc
 from functools import wraps
 from sqlalchemy.orm import sessionmaker, Session
-from data_storage.orm import FileModel, ModelMappingModel, PredictionModel, ModelsModel, PropertyModel, BlockModel, SensorModel, MeasurementSourceModel, SensorItemModel, SensorSourceMappingModel, SensorParamsModel, RawDataModel, MeasurementModel
+from data_storage.orm import (
+    FileModel,
+    ModelMappingModel,
+    ModelsModel,
+    PropertyModel,
+    BlockModel,
+    SensorModel,
+    MeasurementSourceModel,
+    SensorItemModel,
+    SensorSourceMappingModel,
+    SensorParamsModel,
+    MeasurementModel,
+)
 
-from network_models.measurement_source_info import MeasurementSourceInfoGet, MeasurementSourceInfoPost
-from network_models.measurements_info import MeasurementsPost, MeasurementsGet
+from network_models.measurement_source_info import (
+    MeasurementSourceInfoGet,
+    MeasurementSourceInfoPost,
+)
+from network_models.measurements_info import MeasurementsGet
 from network_models.sensor_model_info import SensorModelInfoPost, SensorModelInfoGet
 from network_models.sensors_info import SensorInfoGet, SensorInfoPost, SensorPropertyGet
-from network_models.blocks import ModelMappingGet, PredictionGet, PredictionPost, PropertyGet, MLModelGet, BlockModelGet, SensorBlockinfo, BlockModelPost, PropertyPost
+from network_models.blocks import (
+    ModelMappingGet,
+    PropertyGet,
+    MLModelGet,
+    BlockModelGet,
+    SensorBlockinfo,
+    BlockModelPost,
+    PropertyPost,
+)
 
 
-from starlette.responses import FileResponse
-from http.client import HTTPException
 from config_reader import config
 
 import logging
 import os
 
-logger = logging.getLogger('DataStorageModule')
+logger = logging.getLogger("DataStorageModule")
 
-UPLOAD_DIR=os.path.abspath('./uploads')
+UPLOAD_DIR = os.path.abspath("./uploads")
+
 
 def sqlalchemy_session(engine_url):
     def decorator(func):
@@ -30,8 +51,8 @@ def sqlalchemy_session(engine_url):
         def wrapper(*args, **kwargs):
             # Создание соединения с базой данных
             engine = create_engine(engine_url)
-            Session = sessionmaker(bind=engine)
-            session = Session()
+            session_current = sessionmaker(bind=engine)
+            session = session_current()
 
             try:
                 # Вызов функции с передачей сессии в качестве аргумента
@@ -45,11 +66,12 @@ def sqlalchemy_session(engine_url):
                 session.close()  # Закрытие сессии после завершения работы
 
         return wrapper
+
     return decorator
 
 
-class MySQLStorage():
-    engine_url = f'mysql+pymysql://{config.USER}:{config.PASSWORD.get_secret_value()}@{config.HOST}:3306/{config.DATABASE}'
+class MySQLStorage:
+    engine_url = f"mysql+pymysql://{config.USER}:{config.PASSWORD.get_secret_value()}@{config.HOST}:3306/{config.DATABASE}"
     # engine_url = f'sqlite:///app.db'
     # def close(self):
     #     self.mysql_connection.close()
@@ -58,27 +80,42 @@ class MySQLStorage():
         logger.debug("module starting")
 
     @sqlalchemy_session(engine_url)
-    def add_measurement(self, measurement: MeasurementsGet, insert_ts: datetime, session: Session) -> None:
-            measurement_new = MeasurementModel(
-                insert_ts=int(insert_ts.timestamp()),
-                m_data=measurement.m_data,
-                sensor_item_id=measurement.sensor_item_id,
-                measurement_source_id=measurement.measurement_source_id
-            )
-            session.add(measurement_new)
-            logger.info(f"Added measurement sensor_item_id = {measurement_new.sensor_item_id}, m_data = {measurement_new.m_data}")
-            
+    def add_measurement(
+        self, measurement: MeasurementsGet, insert_ts: datetime, session: Session
+    ) -> None:
+        measurement_new = MeasurementModel(
+            insert_ts=int(insert_ts.timestamp()),
+            m_data=measurement.m_data,
+            sensor_item_id=measurement.sensor_item_id,
+            measurement_source_id=measurement.measurement_source_id,
+        )
+        session.add(measurement_new)
+        logger.info(
+            f"Added measurement sensor_item_id = {measurement_new.sensor_item_id}, m_data = {measurement_new.m_data}"
+        )
 
     @sqlalchemy_session(engine_url)
-    def get_last_three_measurements_for_sources(self, measurement_source_ids: List[int], session: Session) -> List[MeasurementsGet]:
+    def get_last_three_measurements_for_sources(
+        self, measurement_source_ids: List[int], session: Session
+    ) -> List[MeasurementsGet]:
         measurements = []
         for source_id in measurement_source_ids:
-            result = session.query(MeasurementModel)\
-                            .filter(MeasurementModel.measurement_source_id == source_id)\
-                            .order_by(desc(MeasurementModel.insert_ts))\
-                            .limit(3)\
-                            .all()
-            result = [MeasurementsGet(m_data=result_data.m_data, sensor_item_id=result_data.sensor_item_id, measurement_source_id=result_data.measurement_source_id, insert_ts=result_data.insert_ts) for result_data in result]
+            result = (
+                session.query(MeasurementModel)
+                .filter(MeasurementModel.measurement_source_id == source_id)
+                .order_by(desc(MeasurementModel.insert_ts))
+                .limit(3)
+                .all()
+            )
+            result = [
+                MeasurementsGet(
+                    m_data=result_data.m_data,
+                    sensor_item_id=result_data.sensor_item_id,
+                    measurement_source_id=result_data.measurement_source_id,
+                    insert_ts=result_data.insert_ts,
+                )
+                for result_data in result
+            ]
             measurements.extend(result)
             logger.info(f"Get measurements {measurements}")
         return measurements
@@ -86,29 +123,31 @@ class MySQLStorage():
     # MEASUREMENT SOURCE ########################
 
     @sqlalchemy_session(engine_url)
-    def get_measurement_sources(self, session: Session) -> List[MeasurementSourceInfoGet]:
+    def get_measurement_sources(
+        self, session: Session
+    ) -> List[MeasurementSourceInfoGet]:
         sources_data = session.query(MeasurementSourceModel).all()
         sources = [
             MeasurementSourceInfoGet(
                 id=source.id,
                 name=source.name,
                 description=source.description,
-                unit=source.units
-            ) for source in sources_data
+                unit=source.units,
+            )
+            for source in sources_data
         ]
         logger.info(f"Get measurement sources {sources}")
         return sources
 
     @sqlalchemy_session(engine_url)
-    def add_measurement_source(self, source: MeasurementSourceInfoPost, session: Session) -> None:
+    def add_measurement_source(
+        self, source: MeasurementSourceInfoPost, session: Session
+    ) -> None:
         new_source = MeasurementSourceModel(
-            name=source.name,
-            description=source.description,
-            units=source.unit
+            name=source.name, description=source.description, units=source.unit
         )
         session.add(new_source)
         logger.info(f"Add measurement sources {new_source}")
-
 
     # SENSORS ##############
     @sqlalchemy_session(engine_url)
@@ -116,30 +155,25 @@ class MySQLStorage():
         models_data = session.query(SensorModel).all()
         models = [
             SensorModelInfoGet(
-                id=model.id,
-                name=model.name,
-                description=model.description
-            ) for model in models_data
+                id=model.id, name=model.name, description=model.description
+            )
+            for model in models_data
         ]
         logger.info(f"Get sensors models {models}")
         return models
 
     @sqlalchemy_session(engine_url)
     def add_sensor_model(self, model: SensorModelInfoPost, session) -> None:
-        new_model = SensorModel(
-            name=model.name,
-            description=model.description
-        )
+        new_model = SensorModel(name=model.name, description=model.description)
         session.add(new_model)
         logger.info(f"Add sensors model {new_model}")
-
 
     @sqlalchemy_session(engine_url)
     def get_sensors_info(self, need_active: bool, session) -> List[SensorInfoGet]:
         query = session.query(SensorItemModel)
         if need_active:
             query = query.filter(SensorItemModel.is_active == True)
-        
+
         sensors_data = query.all()
         sensors: List[SensorInfoGet] = []
 
@@ -150,24 +184,62 @@ class MySQLStorage():
             addition_info = raw_sensor.addition_info
             model_id = raw_sensor.sensor_id
 
-            parameters_query = session.query(SensorParamsModel).filter(SensorParamsModel.sensor_item_id == sensor_id).all()
-            sensor_parameters = {param.param_name: param.param_value for param in parameters_query if param.property_id is None}
+            parameters_query = (
+                session.query(SensorParamsModel)
+                .filter(SensorParamsModel.sensor_item_id == sensor_id)
+                .all()
+            )
+            sensor_parameters = {
+                param.param_name: param.param_value
+                for param in parameters_query
+                if param.property_id is None
+            }
 
-            properties_query = session.query(MeasurementSourceModel.id, MeasurementSourceModel.name, MeasurementSourceModel.units)\
-                                    .join(SensorSourceMappingModel, MeasurementSourceModel.id == SensorSourceMappingModel.measurement_source_id)\
-                                    .filter(SensorSourceMappingModel.sensor_item_id == sensor_id)\
-                                    .all()
-            
+            properties_query = (
+                session.query(
+                    MeasurementSourceModel.id,
+                    MeasurementSourceModel.name,
+                    MeasurementSourceModel.units,
+                )
+                .join(
+                    SensorSourceMappingModel,
+                    MeasurementSourceModel.id
+                    == SensorSourceMappingModel.measurement_source_id,
+                )
+                .filter(SensorSourceMappingModel.sensor_item_id == sensor_id)
+                .all()
+            )
+
             props: List[SensorPropertyGet] = []
             for property_id, property_name, property_units in properties_query:
-                property_parameters = {param.param_name: param.param_value for param in parameters_query if param.property_id == property_id}
-                props.append(SensorPropertyGet(measurement_source_id=property_id, name=property_name, unit=property_units, parameters=property_parameters))
+                property_parameters = {
+                    param.param_name: param.param_value
+                    for param in parameters_query
+                    if param.property_id == property_id
+                }
+                props.append(
+                    SensorPropertyGet(
+                        measurement_source_id=property_id,
+                        name=property_name,
+                        unit=property_units,
+                        parameters=property_parameters,
+                    )
+                )
 
-            sensors.append(SensorInfoGet(id=sensor_id, parameters=sensor_parameters, type=sensor_type, properties=props, is_active=is_active, description=addition_info, sensor_model_id=model_id))
-        
+            sensors.append(
+                SensorInfoGet(
+                    id=sensor_id,
+                    parameters=sensor_parameters,
+                    type=sensor_type,
+                    properties=props,
+                    is_active=is_active,
+                    description=addition_info,
+                    sensor_model_id=model_id,
+                )
+            )
+
         logger.info(f"Getting sensors in the amount of {len(sensors)}")
         return sensors
-
 
     @sqlalchemy_session(engine_url)
     def add_sensor(self, sensor: SensorInfoPost, session):
@@ -176,7 +248,7 @@ class MySQLStorage():
             sensor_id=sensor.sensor_model_id,
             is_active=True,
             sensor_type=sensor.type,
-            addition_info=sensor.description
+            addition_info=sensor.description,
         )
         session.add(new_sensor_item)
         session.flush()  # Применяем изменения, чтобы получить id нового sensor_item
@@ -185,7 +257,7 @@ class MySQLStorage():
         for prop in sensor.properties:
             new_sensor_source_mapping = SensorSourceMappingModel(
                 measurement_source_id=prop.measurement_source_id,
-                sensor_item_id=new_sensor_item.id
+                sensor_item_id=new_sensor_item.id,
             )
             session.add(new_sensor_source_mapping)
 
@@ -195,7 +267,7 @@ class MySQLStorage():
                 sensor_item_id=new_sensor_item.id,
                 property_id=None,
                 param_name=param_name,
-                param_value=param_value
+                param_value=param_value,
             )
             session.add(new_sensor_param)
 
@@ -205,27 +277,33 @@ class MySQLStorage():
                     sensor_item_id=new_sensor_item.id,
                     property_id=prop.measurement_source_id,
                     param_name=param_name,
-                    param_value=param_value
+                    param_value=param_value,
                 )
                 session.add(new_sensor_param)
         logger.info(f"Add new sensor {new_sensor_item}")
 
     @sqlalchemy_session(engine_url)
     def toggle_sensor_activation(self, sensor_item_id: int, is_active: bool, session):
-        session.query(SensorItemModel).filter(SensorItemModel.id == sensor_item_id).update({SensorItemModel.is_active: is_active})
+        session.query(SensorItemModel).filter(
+            SensorItemModel.id == sensor_item_id
+        ).update({SensorItemModel.is_active: is_active})
         logger.info(f"Togled sensor status (id = {sensor_item_id})")
         return {"status": "ok"}
-
-
 
     ### MLMODULE
 
     @sqlalchemy_session(engine_url)
     def get_block_list(self, need_active: bool, session: Session):
-        blocks_data = session.query(BlockModel).filter(BlockModel.active == need_active).all()
+        blocks_data = (
+            session.query(BlockModel).filter(BlockModel.active == need_active).all()
+        )
         blocks = {}
         for block in blocks_data:
-            block_model = session.query(ModelsModel).filter(ModelsModel.block_id == block.id).all()[-1]
+            block_model = (
+                session.query(ModelsModel)
+                .filter(ModelsModel.block_id == block.id)
+                .all()[-1]
+            )
             print(block_model.id)
             if block_model is not None:
                 blocks[block] = [
@@ -233,76 +311,105 @@ class MySQLStorage():
                         measurement_source_id=x.measurement_source_id,
                         sensor_item_id=x.sensor_item_id,
                         model_id=x.model_id,
-                        property_id=x.property_id
-                    ) for x in session.query(ModelMappingModel).filter(ModelMappingModel.model_id == block_model.id).all()
+                        property_id=x.property_id,
+                    )
+                    for x in session.query(ModelMappingModel)
+                    .filter(ModelMappingModel.model_id == block_model.id)
+                    .all()
                 ]
                 print(blocks[block])
             else:
-                blocks[block] = ModelMappingGet (
-                                    measurement_source_id=None,
-                                    sensor_item_id=None,
-                                    model_id=None,
-                                    property_id=None
-                                )
-        
+                blocks[block] = ModelMappingGet(
+                    measurement_source_id=None,
+                    sensor_item_id=None,
+                    model_id=None,
+                    property_id=None,
+                )
+
         modelsmapping = []
 
         for block, content in blocks.items():
             if type(content) is not list:
                 modelsmapping.append(
-                    BlockModelGet(
-                        id=block.id,
-                        name=block.name,
-                        active=block.active
-                    )
+                    BlockModelGet(id=block.id, name=block.name, active=block.active)
                 )
             else:
-                print('is list!')
+                print("is list!")
                 sensors = [
-                        SensorBlockinfo(
-                            measurement_source_id=x.measurement_source_id,
-                            sensor_item_id=x.sensor_item_id
-                        ) for x in content
-                    ]
-                model_data = session.query(ModelsModel).filter(ModelsModel.id == content[0].model_id).first()
+                    SensorBlockinfo(
+                        measurement_source_id=x.measurement_source_id,
+                        sensor_item_id=x.sensor_item_id,
+                    )
+                    for x in content
+                ]
+                model_data = (
+                    session.query(ModelsModel)
+                    .filter(ModelsModel.id == content[0].model_id)
+                    .first()
+                )
                 properties_ids = set([x.property_id for x in content])
-                property_data = [session.query(PropertyModel).filter(PropertyModel.id == x).first() for x in properties_ids]
-                print(f'Данные: {property_data[0].name} {property_data[0].unit} стоп')
+                property_data = [
+                    session.query(PropertyModel).filter(PropertyModel.id == x).first()
+                    for x in properties_ids
+                ]
+                print(f"Данные: {property_data[0].name} {property_data[0].unit} стоп")
                 modelsmapping.append(
                     BlockModelGet(
                         id=block.id,
                         name=block.name,
                         sensors=sensors,
-                        model=MLModelGet(id=model_data.id, name=model_data.name, description=model_data.description),
+                        model=MLModelGet(
+                            id=model_data.id,
+                            name=model_data.name,
+                            description=model_data.description,
+                        ),
                         properties=[
-                            PropertyGet(
-                                id=x.id,
-                                name=x.name,
-                                unit=x.unit
-                            ) for x in property_data
+                            PropertyGet(id=x.id, name=x.name, unit=x.unit)
+                            for x in property_data
                         ],
-                        active=block.active
+                        active=block.active,
                     )
                 )
         print(modelsmapping)
         return modelsmapping
 
     @sqlalchemy_session(engine_url)
-    def add_block_params(self, model_params: dict, sensors: List[dict], properties: List[int], session: Session):
-        new_file = FileModel(description=model_params['description'], path=model_params['file_path'])
+    def add_block_params(
+        self,
+        model_params: dict,
+        sensors: List[dict],
+        properties: List[int],
+        session: Session,
+    ):
+        new_file = FileModel(
+            description=model_params["description"], path=model_params["file_path"]
+        )
         session.add(new_file)
         session.flush()
 
-        new_model = ModelsModel(name=model_params['name'], description=model_params['description'], type=model_params['type_model'], file_id=new_file.id, block_id=model_params['block_id'])
+        new_model = ModelsModel(
+            name=model_params["name"],
+            description=model_params["description"],
+            type=model_params["type_model"],
+            file_id=new_file.id,
+            block_id=model_params["block_id"],
+        )
         session.add(new_model)
         session.flush()
 
         for sensor in sensors:
             for property in properties:
-                model_map = ModelMappingModel(measurement_source_id=sensor['measurement_source_id'], sensor_item_id=sensor['sensor_item_id'], model_id=new_model.id, property_id=property)
+                model_map = ModelMappingModel(
+                    measurement_source_id=sensor["measurement_source_id"],
+                    sensor_item_id=sensor["sensor_item_id"],
+                    model_id=new_model.id,
+                    property_id=property,
+                )
                 session.add(model_map)
 
-        logger.info(f"Add model, {len(sensors)} sensor and {len(properties)} properties to block")
+        logger.info(
+            f"Add model, {len(sensors)} sensor and {len(properties)} properties to block"
+        )
         return new_model.id
 
     # @sqlalchemy_session(engine_url)
@@ -311,13 +418,13 @@ class MySQLStorage():
     #     if not block:
     #         raise HTTPException(status_code=404, detail="Block not found")
     #     return block
-    
+
     # @sqlalchemy_session(engine_url)
     # def toggle_block(self, block_id: int, session):
     #     block = session.query(BlockModel).filter(BlockModel.id == block_id).first()
     #     if not block:
     #         raise HTTPException(status_code=404, detail="Block not found")
-        
+
     #     block.active = not block.active
     #     session.add(block)
 
@@ -326,7 +433,7 @@ class MySQLStorage():
         block = BlockModel(name=block_data.name, active=True)
         session.add(block)
         # session.flush()
-        
+
         # block_model = block_data.model
 
         # for sensor in block_data.sensors:
@@ -343,7 +450,7 @@ class MySQLStorage():
     #     model = session.query(AttachmentModel).filter(AttachmentModel.id == model_id).first()
     #     if not model:
     #         raise HTTPException(status_code=404, detail="Model not found")
-        
+
     #     return FileResponse(model.content, filename=model.name)
 
     # # TODO Развернуть нормально структуру папок для сохранения
@@ -383,7 +490,7 @@ class MySQLStorage():
     #     if not attachment:
     #         raise HTTPException(status_code=404, detail="Attachment not found")
     #     return FileResponse(attachment.content, filename=attachment.name)
-    
+
     # #TODO
     # @sqlalchemy_session(engine_url)
     # def add_attachments(self, attachment: AttachmentPost, session):
@@ -395,7 +502,7 @@ class MySQLStorage():
     #     #     )
     #     #     session.add(attach)
     #     pass
-    
+
     @sqlalchemy_session(engine_url)
     def add_property(self, property_data: PropertyPost, session: Session):
         property = PropertyModel(name=property_data.name, unit=property_data.unit)
@@ -405,11 +512,8 @@ class MySQLStorage():
     def get_properties(self, session: Session):
         properties_data = session.query(PropertyModel).all()
         properties = [
-            PropertyGet(
-                id=property.id,
-                name=property.name,
-                unit=property.unit
-            ) for property in properties_data
+            PropertyGet(id=property.id, name=property.name, unit=property.unit)
+            for property in properties_data
         ]
         return properties
 

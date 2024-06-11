@@ -2,13 +2,19 @@ from classes import Model, Block, Sensor, Handler, RandomForestModel
 from typing import List, Dict, Union
 import requests
 import json
+
 # from config_reader import config
 
-URL = 'localhost:3000'
+URL = "localhost:3000"
 
 test_handler = Handler(polling_interval=2, url=URL)
 
-model = RandomForestModel(r'C:\Users\boiko.k.v\Desktop\Carbon-Digital-Twin\diagnostic_modul\random_forest_model.pkl', {}, '0.0.1', ['Elastic Modulus']) # Требуется доработка модуля хранения
+model = RandomForestModel(
+    r"C:\Users\boiko.k.v\Desktop\Carbon-Digital-Twin\diagnostic_modul\random_forest_model.pkl",
+    {},
+    "0.0.1",
+    ["Elastic Modulus"],
+)  # Требуется доработка модуля хранения
 # measurement_source = json.loads(requests.get(f'http://{URL}/measurement_source').content)
 # print(measurement_source)
 # units = []
@@ -20,42 +26,42 @@ sources = [
     Sensor(
         id=6,
         measurement_source_id=4,
-        type_sensor='random',
-        name='press1',
-        unit='Pa',
-        description='press1'
+        type_sensor="random",
+        name="press1",
+        unit="Pa",
+        description="press1",
     ),
     Sensor(
         id=7,
         measurement_source_id=5,
-        type_sensor='random',
-        name='temp1',
-        unit='C',
-        description='temp1'
+        type_sensor="random",
+        name="temp1",
+        unit="C",
+        description="temp1",
     ),
     Sensor(
         id=8,
         measurement_source_id=6,
-        type_sensor='random',
-        name='hum',
-        unit='Precent',
-        description='hum'
+        type_sensor="random",
+        name="hum",
+        unit="Precent",
+        description="hum",
     ),
     Sensor(
         id=9,
         measurement_source_id=7,
-        type_sensor='random',
-        name='temp2',
-        unit='C',
-        description='temp2'
+        type_sensor="random",
+        name="temp2",
+        unit="C",
+        description="temp2",
     ),
     Sensor(
         id=10,
         measurement_source_id=8,
-        type_sensor='random',
-        name='press2',
-        unit='Pa',
-        description='press2'
+        type_sensor="random",
+        name="press2",
+        unit="Pa",
+        description="press2",
     ),
 ]
 # print(measurement_source)

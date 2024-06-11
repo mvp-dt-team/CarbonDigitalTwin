@@ -11,7 +11,8 @@ from config_reader import config
 
 data_storage_address = config.SMADDRESS
 continue_running = True
-logger = logging.getLogger('SensorsModule')
+logger = logging.getLogger("SensorsModule")
+
 
 class SensorsModule:
     sensors: Dict[int, Sensor]
@@ -36,7 +37,8 @@ class SensorsModule:
             callback(verbose)
 
         self.asker = threading.Thread(
-            target=lambda: repeat_every_n_seconds(send_and_callback, self.read_sensors))
+            target=lambda: repeat_every_n_seconds(send_and_callback, self.read_sensors)
+        )
         logger.debug("thread started")
         self.asker.start()
         logger.info("module started")
@@ -56,12 +58,16 @@ class SensorsModule:
             results[sensor_id] = sensor.read_all_properties()  # обработка ошибок
         return results
 
-    def made_measurement_verbose(self, data: dict[int, dict[int, Any]]) -> dict[str, dict[str, Any]]:
+    def made_measurement_verbose(
+        self, data: dict[int, dict[int, Any]]
+    ) -> dict[str, dict[str, Any]]:
         logger.debug("made sensors verbose")
         results = {}
         for sensor_id in data:
             sensor = self.sensors[sensor_id]
-            results[sensor.title] = {sensor.properties[p].name: data[sensor_id][p] for p in data[sensor_id]}
+            results[sensor.title] = {
+                sensor.properties[p].name: data[sensor_id][p] for p in data[sensor_id]
+            }
         return results
 
 

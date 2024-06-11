@@ -10,7 +10,11 @@ def get_sensors_router(storage: MySQLStorage):
     )
 
     @router.get("/", response_model=List[SensorInfoGet])
-    async def get_sensors(need_active: bool = Query(None, description="Filter sensors by their active state")):
+    async def get_sensors(
+        need_active: bool = Query(
+            None, description="Filter sensors by their active state"
+        )
+    ):
         return storage.get_sensors_info(need_active)
 
     @router.post("/")

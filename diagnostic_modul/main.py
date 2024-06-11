@@ -2,16 +2,24 @@ from classes import Model, Block, Sensor, Handler, RandomForestModel
 from typing import List, Dict, Union
 import requests
 import json
+
 # from config_reader import config
 
-URL = 'localhost:5000'
+URL = "localhost:5000"
 
 test_handler = Handler(polling_interval=2, url=URL)
 
-blocks_info = response = requests.get(f'http://{URL}/blocks?need_active=true')
+blocks_info = response = requests.get(f"http://{URL}/blocks?need_active=true")
 
-model = RandomForestModel(r'C:\Users\boiko.k.v\Desktop\CarbonDigitalTwin\diagnostic_modul\random_forest_model.pkl', {}, '0.0.1', ['Elastic Modulus']) # Требуется доработка модуля хранения
-measurement_source = json.loads(requests.get(f'http://{URL}/measurement_source').content)
+model = RandomForestModel(
+    r"C:\Users\boiko.k.v\Desktop\CarbonDigitalTwin\diagnostic_modul\random_forest_model.pkl",
+    {},
+    "0.0.1",
+    ["Elastic Modulus"],
+)  # Требуется доработка модуля хранения
+measurement_source = json.loads(
+    requests.get(f"http://{URL}/measurement_source").content
+)
 print(measurement_source)
 units = []
 for source in measurement_source:

@@ -20,10 +20,14 @@ storage = MySQLStorage()
 
 app = FastAPI()
 
-logging.basicConfig(level=logging.INFO, filename=config.STORAGE_LOG_FILENAME, encoding='utf8')
+logging.basicConfig(
+    level=logging.INFO, filename=config.STORAGE_LOG_FILENAME, encoding="utf8"
+)
 
 # Temporary Redirect возникает из-за префиксов роутера, возможно, они используются как-то неверно
-app.include_router(get_measurement_sources_router(storage), prefix="/measurement_source")
+app.include_router(
+    get_measurement_sources_router(storage), prefix="/measurement_source"
+)
 app.include_router(get_measurements_router(storage), prefix="/measurement")
 app.include_router(get_sensors_router(storage), prefix="/sensor")
 app.include_router(get_sensor_models_router(storage), prefix="/sensor_model")

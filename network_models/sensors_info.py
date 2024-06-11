@@ -8,10 +8,12 @@ class SensorPropertyGet(BaseModel):
     parameters: Dict[str, str]
     measurement_source_id: int
 
+
 class SensorPropertyPost(BaseModel):
     name: str
     parameters: Dict[str, str]
     measurement_source_id: int
+
 
 class SensorInfoPost(BaseModel):
     parameters: Dict[str, str]
@@ -20,6 +22,7 @@ class SensorInfoPost(BaseModel):
     is_active: Optional[bool] = None
     description: Optional[str] = None
     sensor_model_id: Optional[int] = None
+
 
 class SensorInfoGet(BaseModel):
     id: Optional[int] = None
