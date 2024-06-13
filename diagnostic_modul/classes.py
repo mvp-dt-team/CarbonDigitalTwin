@@ -121,20 +121,50 @@ class RandomForestModel(Model):
         with open(self.model_path, "rb") as f:
             self.model = pickle.load(f)
 
-    def predict(self, X) -> List[float]:
-        print(X)
-        result = self.model.predict(np.array(X).reshape(1, -1))
-        return {"property_names": self.property_names, "values": result.tolist()}
+    def predict(self, X) -> dict:
+        result = self.model.predict(np.array(X).reshape(1, -1)).tolist()
+        return [
+            {"m_data": result[x], "property_id": self.property_names[x]["id"]}
+            for x in range(len(self.property_names))
+        ]
 
 
 class YOLOModel(Model):
-    def __init__(self, model_path: str):
-        super().__init__(model_path)
-        self.model = YOLO(self.model_path)
+    def __init__(
+        self,
+        model_path: str,
+        property_names: List[str],
+        id: int,
+        name: str,
+        description: str,
+        params: Dict = None,
+        version: str = None,
+    ):
+        super().__init__(
+            description=description,
+            model_path=model_path,
+            params=params,
+            version=version,
+            property_names=property_names,
+            id=id,
+            name=name,
+        )
+        self.model = YOLO(self.model_path, verbose=False)
 
-    def predict(self, frame: Image.Image) -> Tensor:
-        results = self.model(frame, verbose=False)
+    # TODO Пока нет методики обработки изображений
+    def preprocessing(self, data) -> list:
+        results = []
+        for _ in self.property_names:
+            results.append(random.random())
         return results
+
+    def predict(self, frame: Image.Image) -> dict:
+        labeling = self.model.predict(frame, verbose=False)
+        results = self.preprocessing(labeling)
+        return [
+            {"m_data": results[x], "property_id": self.property_names[x]["id"]}
+            for x in range(len(self.property_names))
+        ]
 
 
 class Block:
@@ -187,10 +217,10 @@ class Block:
                 self.logger.error(f"Ошибка опроса датчиков: {e}")
                 return 1
         elif isinstance(self.sensors[0], Camera):  # Если камера
-            data: Dict[str, Image.Image] = {}
+            data: Image.Image
             for source in self.sensors:
                 self.logger.debug(f"Получаю данные с камеры {source.id}")
-                data[source.id] = source.get_value()
+                data = source.get_value()
             return data
 
     def get_list_sensors_id(self) -> list:
@@ -228,21 +258,16 @@ class Handler:
         self.blocks.append(block)
         return 0
 
-    def write_db_data(self, m_data: float, block_id: int, property_id: int) -> int:
+    def write_db_data(self, data: list) -> int:
         try:
             current_time = datetime.now(timezone.utc)
+
             response = requests.post(
                 url=f"{self.url}/blocks/prediction",
                 json={
                     "insert_ts": current_time.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
                     + "Z",
-                    "insert_values": [
-                        {
-                            "m_data": m_data,
-                            "property_id": property_id,
-                            "block_id": block_id,
-                        }
-                    ],
+                    "insert_values": data,
                 },
             )
             if response.ok:
@@ -280,9 +305,11 @@ class Handler:
         self.logger.info("Модуль начал работать")
         try:
             while self.running:
+                data_packet = []
                 for block in self.blocks:
                     self.logger.info("Опрос датчиков")
                     data = block.poll_sensors(self.url)
+                    self.logger.info("Передача данных модели")
                     if isinstance(
                         data, int
                     ):  # Если целое число, то это какая-то ошибка
@@ -291,53 +318,28 @@ class Handler:
                     elif isinstance(
                         data, list
                     ):  # Если список, то это полученные значения с простых датчиков
-                        self.logger.info("Передача данных модели")
 
                         predict_value = block.model.predict(
                             [float(x["m_data"]) for x in data]
                         )
-                        self.logger.debug(f"X: {data}, y: {predict_value}")
-
-                        if isinstance(predict_value, dict):
-                            print(predict_value)
-                            self.logger.info("Отправка данных на сервер")
-                            for i in range(len(predict_value["values"])):
-                                self.write_db_data(
-                                    m_data=predict_value["values"][i],
-                                    property_id=predict_value["property_names"][i][
-                                        "id"
-                                    ],
-                                    block_id=block.id,
-                                )
-                        else:
-                            self.running = False
-                            raise Exception("Ошибка при обработке данных моделью")
                     elif isinstance(
-                        data, dict
+                        data, Image.Image
                     ):  # Если словарь, то это данные изображения с источником TODO пока эта часть полностью не рабочая
-                        self.queue.put(data)
-                        if not self.queue.empty():
-                            data = self.queue.get()
+                        predict_value = block.model.predict(data)
 
-                            for source_id, source_value in data.items():
-                                model_result = block.model.predict(source_value)
-                                if model_result:
-                                    defects = []
-                                    for r in model_result:
-                                        for b in r.boxes:
-                                            defects.append(
-                                                {
-                                                    "class_": int(b.cls),
-                                                    "confidence_": float(b.conf),
-                                                }
-                                            )
-                                    self.write_db_request(
-                                        source_id, self.processing_values(defects)
-                                    )
-                                    if count % self.frequency_archivating == 0:
-                                        self.archiving_images(
-                                            source_id=source_id, image=source_value
-                                        )
+                    for value in predict_value:
+                        value["block_id"] = block.id
+                        data_packet.append(value)
+                        # self.logger.debug(f"X: {data}, y: {value}")
+
+                for result in data_packet:
+                    if not isinstance(result, dict):
+                        self.running = False
+                        raise Exception("Ошибка при обработке данных моделью")
+
+                self.logger.info("Отправка данных на сервер")
+                self.write_db_data(data=data_packet)
+
                 time.sleep(self.polling_interval)
         except Exception as exc:
             self.logger.error(f"{exc}")
