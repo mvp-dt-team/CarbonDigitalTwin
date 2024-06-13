@@ -1,88 +1,89 @@
-from classes import Model, Block, Sensor, Handler, RandomForestModel
+from classes import Model, Block, Sensor, Handler, RandomForestModel, Camera
 from typing import List, Dict, Union
 import requests
 import json
+import os
 
-# from config_reader import config
+from config_reader import config
 
-URL = "localhost:5000"
+"""
+Сейчас для теста сделан только один блок, поэтому датчики и модель загружаются в единые переменные
+"""
+URL = config.SMADDRESS
+
+models_folder = "./diagnostic_modul/uploads"
+
+if not os.path.exists(models_folder):
+    os.makedirs(models_folder)
+
+blocks = requests.get(f"{URL}/blocks?need_active=true")
+
+# Загрузка всех датчиков
+sensors = []
+model = None
+
+for block in blocks.json():
+    block_id = block["id"]
+
+    sensors_in_block = {
+        x["sensor_item_id"]: x["measurement_source_id"] for x in block["sensors"]
+    }
+    sensors_data = requests.get(f"{URL}/sensor?need_active=true").json()
+
+    for sensor in sensors_data:
+        if sensor["id"] in sensors_in_block:
+            if sensor["type"] == "camera":
+                sensors.append(
+                    Camera(
+                        id=sensor["id"],
+                        description=sensor["description"],
+                        address=sensor["parameters"]["address"],
+                    )
+                )
+            else:
+                measurement_source = next(
+                    prop
+                    for prop in sensor["properties"]
+                    if prop["measurement_source_id"] == sensors_in_block[sensor["id"]]
+                )
+                sensors.append(
+                    Sensor(
+                        id=sensor["id"],
+                        measurement_source_id=sensors_in_block[sensor["id"]],
+                        type_sensor=sensor["type"],
+                        name=measurement_source["name"],
+                        unit=measurement_source["unit"],
+                        description=sensor["description"],
+                    )
+                )
+
+    response = requests.get(f"{URL}/blocks/models/{block['model']['id']}")
+    if response.status_code == 200:
+        filename = response.headers.get("Content-Disposition").split("%5C")[-1]
+        file_path = os.path.join(models_folder, filename)
+        if os.path.exists(file_path):
+            base, ext = os.path.splitext(filename)
+            print(base, ext)
+            counter = 1
+            new_filename = f"{base}_{counter}{ext}"
+            new_file_path = os.path.join(models_folder, new_filename)
+            while os.path.exists(new_file_path):
+                counter += 1
+                new_filename = f"{base}_{counter}{ext}"
+                new_file_path = os.path.join(models_folder, new_filename)
+            file_path = new_file_path
+        with open(file_path, "wb") as f:
+            for chunk in response.iter_content(1024):
+                f.write(chunk)
+
+        model = RandomForestModel(
+            id=block["model"]["id"],
+            name=block["model"]["name"],
+            description=block["model"]["description"],
+            model_path=file_path,
+            property_names=block["properties"],
+        )
 
 test_handler = Handler(polling_interval=2, url=URL)
-
-blocks_info = response = requests.get(f"http://{URL}/blocks?need_active=true")
-
-model = RandomForestModel(
-    r"C:\Users\boiko.k.v\Desktop\CarbonDigitalTwin\diagnostic_modul\random_forest_model.pkl",
-    {},
-    "0.0.1",
-    ["Elastic Modulus"],
-)  # Требуется доработка модуля хранения
-measurement_source = json.loads(
-    requests.get(f"http://{URL}/measurement_source").content
-)
-print(measurement_source)
-units = []
-for source in measurement_source:
-    response = requests.get(f'http://{URL}/sensors_by_source?id={source["id"]}')
-    units.append(json.loads(response.content))
-
-# sources = [
-#     Sensor(
-#         id=6,
-#         measurement_source_id=4,
-#         type_sensor='random',
-#         name='press1',
-#         unit='Pa',
-#         description='press1'
-#     ),
-#     Sensor(
-#         id=7,
-#         measurement_source_id=5,
-#         type_sensor='random',
-#         name='temp1',
-#         unit='C',
-#         description='temp1'
-#     ),
-#     Sensor(
-#         id=8,
-#         measurement_source_id=6,
-#         type_sensor='random',
-#         name='hum',
-#         unit='Precent',
-#         description='hum'
-#     ),
-#     Sensor(
-#         id=9,
-#         measurement_source_id=7,
-#         type_sensor='random',
-#         name='temp2',
-#         unit='C',
-#         description='temp2'
-#     ),
-#     Sensor(
-#         id=10,
-#         measurement_source_id=8,
-#         type_sensor='random',
-#         name='press2',
-#         unit='Pa',
-#         description='press2'
-#     ),
-# ]
-# print(measurement_source)
-# for i in range(len(units)):
-#     for j in range(len(units[i])):
-#         sources.append(Sensor(
-#             id=j,
-#             measurement_source_id=i,
-#             type_sensor='test',
-#             name=measurement_source[i]['name'],
-#             unit=measurement_source[i]['unit'],
-#             description=units[i][j]['description'],
-#             model_name=units[i][j]['model_name'],
-#             installation_time=units[i][j]['installation_time'],
-#             deactivation_time=units[i][j]['deactivation_time']
-#         ))
-
-# # print(sources)
-test_handler.add_block(model, sources)
+test_handler.add_block(block_id, model, sensors)
 test_handler.action()

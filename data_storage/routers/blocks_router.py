@@ -63,10 +63,6 @@ def blocks_router(storage: MySQLStorage):
         return FileResponse(
             status_code=response["status_code"],
             path=response["file_path"],
-            headers={
-                "MODEL_NAME": response["name"],
-                "MODEL_DESCRIPTION": response["description"],
-            },
             filename=response["file_path"].split("/")[-1],
         )
 
