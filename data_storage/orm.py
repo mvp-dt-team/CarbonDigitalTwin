@@ -115,7 +115,7 @@ class FileModel(Base):
     __tablename__ = "files"
     id = Column(Integer, primary_key=True, autoincrement=True)
     description = Column(VARCHAR(255), nullable=False)
-    path = Column(VARCHAR(255), nullable=False, unique=True)
+    path = Column(VARCHAR(255), nullable=False)
 
 
 class ModelMappingModel(Base):

@@ -15,8 +15,7 @@ from data_storage.orm import (
     SensorParamsModel,
     MeasurementModel,
     PredictionModel,
-    RawDataModel
-    
+    RawDataModel,
 )
 from config_reader import config
 from network_models.sensors_info import SensorInfoPost, SensorPropertyPost
@@ -41,8 +40,6 @@ def clear_database(session):
 
     # Фиксируем изменения
     session.commit()
-    
-    
 
 
 # Функция для создания начальных данных
@@ -90,6 +87,7 @@ def create_initial_data(session):
         session.add(new_sensor_source_mapping)
 
     session.commit()
+
 
 @pytest.fixture(scope="session")
 def engine():

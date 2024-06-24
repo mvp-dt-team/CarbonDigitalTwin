@@ -302,12 +302,13 @@ class MySQLStorage:
         )
         blocks = {}
         for block in blocks_data:
-            block_model = (
+            model_list = (
                 session.query(ModelsModel)
                 .filter(ModelsModel.block_id == block.id)
-                .all()[-1]
+                .all()
             )
-            if block_model is not None:
+            if len(model_list) > 0:
+                block_model = model_list[-1]
                 blocks[block] = [
                     ModelMappingGet(
                         measurement_source_id=x.measurement_source_id,
