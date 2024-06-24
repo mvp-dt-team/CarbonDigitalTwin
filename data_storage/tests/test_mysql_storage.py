@@ -389,28 +389,28 @@ def test_addition_of_prediction_with_missing_fields(missing_field, session):
             block_id=new_prediction_model["block_id"],
         )
 
+
 @pytest.mark.models
 def test_successful_addition_of_new_property(session):
     """Тест на успешное добавление свойств в БД"""
     storage = MySQLStorage()
-    property_data = PropertyPost(
-        name='test1',
-        unit='test1'
-    )  
+    property_data = PropertyPost(name="test1", unit="test1")
     new_property = storage.add_property(property_data=property_data)
     session.commit()
-      
-    assert new_property['status_code'] == 200
-    assert session.get(PropertyModel, new_property['added_id']) is not None
+
+    assert new_property["status_code"] == 200
+    assert session.get(PropertyModel, new_property["added_id"]) is not None
+
+
 @pytest.mark.models
 def test_successful_retrieval_of_all_properties(session):
     """Тест на успешное получения списка свойств из БД"""
-    storage = MySQLStorage() 
-    prop = PropertyModel(name="test_property", unit="unit")  
-    session.add(prop)  
-    session.commit()  
-    
-    response = storage.get_properties()  
+    storage = MySQLStorage()
+    prop = PropertyModel(name="test_property", unit="unit")
+    session.add(prop)
+    session.commit()
+
+    response = storage.get_properties()
     assert type(response) is list
     assert len(response) > 0
     assert response[-1].name == "test_property"

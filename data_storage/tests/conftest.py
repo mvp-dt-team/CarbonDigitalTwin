@@ -22,6 +22,7 @@ from network_models.sensors_info import SensorInfoPost, SensorPropertyPost
 
 from datetime import datetime
 
+
 # Функция для очистки базы данных
 def clear_database(session):
     # Очистка базы данных после теста
@@ -115,8 +116,8 @@ def session(engine, tables):
 def setup_database(session):
     clear_database(session)
     create_initial_data(session)
-    yield 
-    clear_database(session) 
+    yield
+    clear_database(session)
 
 
 def pytest_html_results_table_header(cells):
@@ -127,6 +128,7 @@ def pytest_html_results_table_header(cells):
 def pytest_html_results_table_row(report, cells):
     cells.insert(2, f"<td>{report.description}</td>")
     cells.insert(1, f'<td class="col-time">{datetime.utcnow()}</td>')
+
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):

@@ -498,7 +498,7 @@ class MySQLStorage:
         property = PropertyModel(name=property_data.name, unit=property_data.unit)
         session.add(property)
         session.flush()
-        return {'status_code': 200, 'added_id': property.id}
+        return {"status_code": 200, "added_id": property.id}
 
     @sqlalchemy_session(engine_url)
     def get_properties(self, session: Session):
