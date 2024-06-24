@@ -458,6 +458,12 @@ class MySQLStorage:
 
     @sqlalchemy_session(engine_url)
     def get_predictions(self, block_id: int, n_predictions: int, session: Session):
+        if session.get(BlockModel, block_id) is None:
+            return {
+                "status_code": 404,
+                "detail": "Блока не существует",
+            }
+
         predictions_data = (
             session.query(PredictionModel)
             .filter(PredictionModel.block_id == block_id)
@@ -491,6 +497,8 @@ class MySQLStorage:
     def add_property(self, property_data: PropertyPost, session: Session):
         property = PropertyModel(name=property_data.name, unit=property_data.unit)
         session.add(property)
+        session.flush()
+        return {'status_code': 200, 'added_id': property.id}
 
     @sqlalchemy_session(engine_url)
     def get_properties(self, session: Session):

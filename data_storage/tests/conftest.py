@@ -20,6 +20,7 @@ from data_storage.orm import (
 from config_reader import config
 from network_models.sensors_info import SensorInfoPost, SensorPropertyPost
 
+from datetime import datetime
 
 # Функция для очистки базы данных
 def clear_database(session):
@@ -112,7 +113,23 @@ def session(engine, tables):
 
 @pytest.fixture(scope="function", autouse=True)
 def setup_database(session):
-    clear_database(session)  # Очистка базы данных перед тестом
-    create_initial_data(session)  # Создание начальных данных перед тестом
-    yield  # Здесь происходит выполнение самого теста
-    clear_database(session)  # Очистка базы данных после теста
+    clear_database(session)
+    create_initial_data(session)
+    yield 
+    clear_database(session) 
+
+
+def pytest_html_results_table_header(cells):
+    cells.insert(2, "<th>Description</th>")
+    cells.insert(1, '<th class="sortable time" data-column-type="time">Time</th>')
+
+
+def pytest_html_results_table_row(report, cells):
+    cells.insert(2, f"<td>{report.description}</td>")
+    cells.insert(1, f'<td class="col-time">{datetime.utcnow()}</td>')
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    outcome = yield
+    report = outcome.get_result()
+    report.description = str(item.function.__doc__)

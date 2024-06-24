@@ -88,7 +88,7 @@ def blocks_router(storage: MySQLStorage):
 
     @router.post("/property")
     async def add_property(property_data: PropertyPost):
-        storage.add_property(property_data)
+        return storage.add_property(property_data)
 
     @router.get("/property", response_model=List[PropertyGet])
     async def get_properties():
