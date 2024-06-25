@@ -18,47 +18,76 @@ if not os.path.exists(models_folder):
 
 blocks_data = requests.get(f"{URL}/blocks?need_active=true")
 
+
+def find_sensors_with_measurements(block_data):
+    sensors_data = requests.get(f"{URL}/sensor?need_active=true").json()
+
+    # Создаем словарь для быстрого доступа к датчикам по их id
+    sensor_dict = {sensor["id"]: sensor for sensor in sensors_data}
+
+    # Инициализируем список для хранения результатов
+    result = []
+
+    # Итерируемся по датчикам в данных блока
+    for sensor in block_data.get("sensors", []):
+        sensor_item_id = sensor.get("sensor_item_id")
+        measurement_source_id = sensor.get("measurement_source_id")
+
+        # Ищем датчик по sensor_item_id и measurement_source_id
+        for sensor_id, sensor_info in sensor_dict.items():
+            for prop in sensor_info["properties"]:
+                if (
+                    prop["measurement_source_id"] == measurement_source_id
+                    and sensor_id == sensor_item_id
+                ):
+                    result.append(
+                        {
+                            "id": sensor_id,
+                            "measurement_source_id": measurement_source_id,
+                            "name": prop["name"],
+                            "description": sensor_info["description"],
+                            "unit": prop["unit"],
+                            "type": sensor_info["type"],
+                            "parameters": sensor_info["parameters"],
+                        }
+                    )
+
+    return result
+
+
 # Загрузка всех датчиков
 sensors = []
 model = None
 blocks = []
+print(f"len = {len(blocks_data.json())}")
 for block in blocks_data.json():
     block_data = {}
     block_data["block_id"] = block["id"]
     block_data["sensors"] = []
     block_data["model"] = None
 
-    sensors_in_block = {
-        x["sensor_item_id"]: x["measurement_source_id"] for x in block["sensors"]
-    }
-    sensors_data = requests.get(f"{URL}/sensor?need_active=true").json()
+    sensors_in_block = [sensor for sensor in find_sensors_with_measurements(block)]
 
-    for sensor in sensors_data:
-        if sensor["id"] in sensors_in_block:
-            if sensor["type"] == "camera":
-                block_data["sensors"].append(
-                    Camera(
-                        id=sensor["id"],
-                        description=sensor["description"],
-                        address=sensor["parameters"]["address"],
-                    )
+    for sensor in sensors_in_block:
+        if sensor["type"] == "camera":
+            block_data["sensors"].append(
+                Camera(
+                    id=sensor["id"],
+                    description=sensor["description"],
+                    address=sensor["parameters"]["address"],
                 )
-            else:
-                measurement_source = next(
-                    prop
-                    for prop in sensor["properties"]
-                    if prop["measurement_source_id"] == sensors_in_block[sensor["id"]]
+            )
+        else:
+            block_data["sensors"].append(
+                Sensor(
+                    id=sensor["id"],
+                    measurement_source_id=sensor["measurement_source_id"],
+                    type_sensor=sensor["type"],
+                    name=sensor["name"],
+                    unit=sensor["unit"],
+                    description=sensor["description"],
                 )
-                block_data["sensors"].append(
-                    Sensor(
-                        id=sensor["id"],
-                        measurement_source_id=sensors_in_block[sensor["id"]],
-                        type_sensor=sensor["type"],
-                        name=measurement_source["name"],
-                        unit=measurement_source["unit"],
-                        description=sensor["description"],
-                    )
-                )
+            )
 
     response = requests.get(f"{URL}/blocks/models/{block['model']['id']}")
     if response.status_code == 200:
@@ -95,6 +124,7 @@ for block in blocks_data.json():
                 model_path=file_path,
                 property_names=block["properties"],
             )
+    print(len(block_data["sensors"]))
     blocks.append(block_data)
 
 test_handler = Handler(polling_interval=2, url=URL)

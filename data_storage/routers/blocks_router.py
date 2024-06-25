@@ -42,7 +42,7 @@ def blocks_router(storage: MySQLStorage):
 
     @router.post("/")
     async def add_block(block_data: BlockModelPost):
-        storage.add_block(block_data)
+        return storage.add_block(block_data)
 
     @router.get("/models/{model_id}")
     async def get_model(model_id: int):

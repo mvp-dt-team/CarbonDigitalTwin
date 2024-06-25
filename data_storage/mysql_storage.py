@@ -297,9 +297,12 @@ class MySQLStorage:
 
     @sqlalchemy_session(engine_url)
     def get_block_list(self, need_active: bool, session: Session):
-        blocks_data = (
-            session.query(BlockModel).filter(BlockModel.active == need_active).all()
-        )
+        if need_active:
+            blocks_data = (
+                session.query(BlockModel).filter(BlockModel.active == need_active).all()
+            )
+        else:
+            blocks_data = session.query(BlockModel).all()
         blocks = {}
         for block in blocks_data:
             model_list = (
@@ -336,12 +339,15 @@ class MySQLStorage:
                     BlockModelGet(id=block.id, name=block.name, active=block.active)
                 )
             else:
+                sensors_set = set()
+                for i in content:
+                    sensors_set.add((i.measurement_source_id, i.sensor_item_id))
                 sensors = [
                     SensorBlockinfo(
-                        measurement_source_id=x.measurement_source_id,
-                        sensor_item_id=x.sensor_item_id,
+                        measurement_source_id=x[0],
+                        sensor_item_id=x[1],
                     )
-                    for x in content
+                    for x in sensors_set
                 ]
                 model_data = (
                     session.query(ModelsModel)
@@ -429,6 +435,8 @@ class MySQLStorage:
     def add_block(self, block_data: BlockModelPost, session: Session):
         block = BlockModel(name=block_data.name, active=True)
         session.add(block)
+        session.flush()
+        return {"status_code": 200, "id": block.id}
 
     # TODO Скорее всего не нужно
     # @sqlalchemy_session(engine_url)

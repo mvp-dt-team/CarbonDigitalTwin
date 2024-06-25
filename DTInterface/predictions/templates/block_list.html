@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <title>{{title}}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+<body>
+    <!--ШАПКА САЙТА-->
+    <header class="py-3 mb-3 border-bottom">
+        <div class="container-fluid d-grid gap-3 align-items-center" style="grid-template-columns: 1fr 2fr;">
+          <div class="dropdown">
+            <a href="#" class="d-flex align-items-center col-lg-4 mb-2 mb-lg-0 link-body-emphasis text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                <svg width="32px" height="32px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 6H20M4 12H20M4 18H20" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+            </a>
+            <ul class="dropdown-menu text-small shadow">
+              <li><a class="dropdown-item" href="{% url 'block_list' %}">Раздел моделей</a></li>
+              <li><a class="dropdown-item" href="#">Раздел датчиков</a></li>
+            </ul>
+          </div>
+    
+          <div class="d-flex align-items-center">
+            <form class="w-100 me-3" role="search">
+              <input type="search" class="form-control" placeholder="Search..." aria-label="Search">
+            </form>
+            
+            <div class="flex-shrink-0 dropdown">
+              <a href="#" class="d-block link-body-emphasis text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><svg width="32px" height="32px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M13.9794 2.97636C12.7523 2.27761 11.2477 2.27761 10.0207 2.97636L7.59467 4.35783L7.59463 4.35776L7.58436 4.36378L5.17499 5.77401C3.95632 6.48731 3.20403 7.79031 3.19563 9.20235L3.17903 11.994L3.17896 11.994L3.17903 12.0059L3.19563 14.7976C3.20403 16.2097 3.95632 17.5127 5.17499 18.226L7.58436 19.6362L7.58433 19.6363L7.59467 19.6422L10.0207 21.0236C11.2477 21.7224 12.7523 21.7224 13.9794 21.0236L16.4053 19.6422L16.4054 19.6422L16.4157 19.6362L18.825 18.226C20.0437 17.5127 20.796 16.2097 20.8044 14.7976L20.821 12.0059H20.8211L20.821 11.994L20.8044 9.20235C20.796 7.7903 20.0437 6.4873 18.825 5.77401L16.4157 4.36378L16.4157 4.36371L16.4053 4.35783L13.9794 2.97636ZM11.0103 4.71433C11.6239 4.36496 12.3762 4.36496 12.9897 4.71433L15.4105 6.09285L17.8147 7.50008C18.4241 7.85673 18.8002 8.50823 18.8044 9.21425L18.821 12L18.8044 14.7857C18.8002 15.4918 18.4241 16.1433 17.8147 16.4999L15.4105 17.9072L12.9897 19.2857C12.3762 19.635 11.6239 19.635 11.0103 19.2857L8.58952 17.9071L6.18528 16.4999C5.57594 16.1433 5.1998 15.4918 5.1956 14.7857L5.17903 12L5.1956 9.21425C5.1998 8.50823 5.57594 7.85673 6.18528 7.50008L8.5895 6.09286L11.0103 4.71433ZM11 12C11 11.4477 11.4477 11 12 11C12.5523 11 13 11.4477 13 12C13 12.5523 12.5523 13 12 13C11.4477 13 11 12.5523 11 12ZM12 9C10.3432 9 9.00001 10.3431 9.00001 12C9.00001 13.6568 10.3432 15 12 15C13.6569 15 15 13.6568 15 12C15 10.3431 13.6569 9 12 9Z" fill="#000000"/>
+                </svg></a>
+              <ul class="dropdown-menu text-small shadow">
+                <li><a class="dropdown-item" href="#">Выход</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </header>
+      <!---->
+
+      <main>
+
+        <section class="py-5 text-center container">
+          <div class="row py-lg-5">
+            <div class="col-lg-6 col-md-8 mx-auto">
+              <h1 class="fw-light">Список модулей <a href="{% url 'add_block' %}"><span class="btn badge text-bg-secondary">+</span></a></h1>
+            </div>
+          </div>
+        </section>
+      
+        <div class="album py-5 bg-body-tertiary">
+          <div class="container">
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
+              {% for block in blocks %}
+              <div class="col">
+                <div class="card shadow-sm">
+                  <div class="card-body">
+                    <h5 class="card-title">{{ block.name }}</h5>
+                    {%if block.active%}
+                    <h3 class="card-text text-success">В работе</h3>
+                    {% else %}
+                    <h3 class="card-text text-danger">Отключен</h3>
+                    {% endif %}
+                    <p>{{ block.model.description }}</p>
+                    <a href="{% url 'management_panel' block.id %}" class="btn btn-sm btn-outline-dark">Панель управления</a>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      
+      </main>
+
+ 
+</body>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</html>
