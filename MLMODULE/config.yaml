@@ -1,9 +1,0 @@
-# logging parameters
-LOGNAME: ml_module.log
-
-# storage service parameters
-SDIP: localhost
-SDPORT: 3000
-
-# service parameters
-POLLINT: 5 # в секундах (В данный момент не используется)
