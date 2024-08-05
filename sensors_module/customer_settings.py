@@ -39,3 +39,4 @@ class CustomerSettings:
 
         self.connections['modbus'] = ModbusTCPClient(config.MODBASTCP)
         self.connections['modbus'].connect()
+

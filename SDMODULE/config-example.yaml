@@ -1,0 +1,13 @@
+# db connection data
+HOST: 0.0.0.0
+USER: user
+PASSWORD: password
+DB: db
+
+# logging parameters
+LOGNAME: storage_module.log
+
+# service parameters
+SDIP: localhost
+SPPPORT: 3000
+

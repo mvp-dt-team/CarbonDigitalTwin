@@ -226,3 +226,4 @@ class MySQLStorage():
         session.flush()
         logger.info(f"Add new file {new_file}")
         return new_file.id
+

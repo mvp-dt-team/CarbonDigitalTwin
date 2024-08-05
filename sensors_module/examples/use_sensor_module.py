@@ -10,3 +10,4 @@ m = SensorsModule()
 app = SensorModuleUI(lambda: m.start(app.update_interface), m.stop)
 
 app.mainloop()
+

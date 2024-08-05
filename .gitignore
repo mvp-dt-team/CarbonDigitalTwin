@@ -1,15 +1,18 @@
-diagnostic_modul/sensor-module/data
+MLMODULE/sensor-module/data
 data.db
-diagnostic_modul/sensor-module/__pycache__
+MLMODULE/sensor-module/__pycache__
 .coverage
-diagnostic_modul/sensor-module/assets
+MLMODULE/sensor-module/assets
 report.html
 venv
 .vscode
 *.zip
 .idea
 .env
-*.log
+
+CDMODULE/config.yaml
+SDMODULE/config.yaml
+MLMODULE/config.yaml
 
 __pycache__
 ML*.csv
@@ -17,3 +20,4 @@ ML*.csv
 *.png
 *.gif
 .venv
+DTInterface/db.sqlite3
