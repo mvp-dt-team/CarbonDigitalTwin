@@ -1,0 +1,10 @@
+# logging parameters
+LOGNAME: sensors_module.log
+
+# storage service parameters
+SDIP: localhost
+SPPPORT: 3000
+
+# service parameters
+MODBASTCP: 127.0.0.1
+POLLINT: 5 # в секундах

@@ -1,8 +1,8 @@
-diagnostic_modul/sensor-module/data
+MLMODULE/sensor-module/data
 data.db
-diagnostic_modul/sensor-module/__pycache__
+MLMODULE/sensor-module/__pycache__
 .coverage
-diagnostic_modul/sensor-module/assets
+MLMODULE/sensor-module/assets
 report.html
 venv
 .vscode
@@ -10,6 +10,9 @@ venv
 .idea
 .env
 *.log
+MLMODULE/config.yaml
+CDMODULE/config.yaml
+SDMODULE/config.yaml
 
 __pycache__
 ML*.csv
