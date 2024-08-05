@@ -1,12 +1,12 @@
 # Модуль хранения данных
 
-Используется Python версии 1.12.4
+Используется Python версии 3.12.4
 
 ## Установка
 
-```bash
-pip install -r .\requirements.txt
-```
+1. `python -m venv venv`
+2. `.\venv\Scripts\activate` (Windows)
+3. `pip install -r requirements.txt`
 
 НЕТ БИБЛИОТЕК ДЛЯ ТЕСТРОВАНИЯ!!! TODO
 

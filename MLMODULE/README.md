@@ -1,17 +1,21 @@
 # Digital_Twin_Carbon
 Модуль машинного обучения для MVP программного обеспечения цифрового двойника ПАН
 
-Используется Python версии 1.12.4
+Используется Python версии 3.12.4
 
 _Предварительно должен быть запущен модуль хранения данных_
 
 ## Установка
 
-pip install -r requirements
+1. `python -m venv venv`
+2. `.\venv\Scripts\activate` (Windows)
+3. `pip install -r requirements.txt`
 
 ## Запуск
 
+```bash
 python main.py
+```
 
 ## Документация
 
