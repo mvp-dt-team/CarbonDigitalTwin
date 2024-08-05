@@ -9,10 +9,6 @@ venv
 *.zip
 .idea
 .env
-*.log
-MLMODULE/config.yaml
-CDMODULE/config.yaml
-SDMODULE/config.yaml
 
 __pycache__
 ML*.csv
