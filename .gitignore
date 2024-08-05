@@ -17,7 +17,6 @@ MLMODULE/config.yaml
 __pycache__
 ML*.csv
 *.csv
-*.png
 *.gif
 .venv
 DTInterface/db.sqlite3
