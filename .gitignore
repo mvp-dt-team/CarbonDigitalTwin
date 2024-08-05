@@ -10,6 +10,10 @@ venv
 .idea
 .env
 
+CDMODULE/config.yaml
+SDMODULE/config.yaml
+MLMODULE/config.yaml
+
 __pycache__
 ML*.csv
 *.csv

@@ -1,0 +1,13 @@
+# db connection data
+HOST: 195.133.147.52
+USER: develop
+PASSWORD: aa09dd995C72_5355a598fc7D8ab1230a
+DB: digital_twin_database
+
+# logging parameters
+LOGNAME: storage_module.log
+
+# service parameters
+SDIP: localhost
+SPPPORT: 3000
+
