@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 3000
 
 # Определяем команду для запуска микросервиса  
-CMD ["uvicorn", "data_storage_module:app", "--reload", "--port", "3000"]
+CMD ["uvicorn", "data_storage_module:app", "--reload", "--port", "3000", "--host", "0.0.0.0"]0.

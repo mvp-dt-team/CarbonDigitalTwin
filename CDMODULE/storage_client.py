@@ -1,7 +1,7 @@
 import datetime
 import logging
 from typing import List, Any
-
+import time
 import requests
 
 from network_models.measurements_info import MeasurementsPost, MeasurementsGet
@@ -51,6 +51,8 @@ class StorageClient:
                 logger.error(f"Timeout Error: {errt}")
             except requests.exceptions.RequestException as err:
                 logger.error(f"Oops: Something Else: {err}")
+            finally:
+                time.sleep(5)
 
         logger.info("Соединение установлено!")
         return sensor_data
