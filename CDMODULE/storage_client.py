@@ -7,6 +7,8 @@ import requests
 from network_models.measurements_info import MeasurementsPost, MeasurementsGet
 
 logger = logging.getLogger("StorageClient")
+logger.setLevel(logging.INFO)
+logger.addHandler(logging.StreamHandler())
 
 
 def print_sensor_data(sensor_data: List[Any]):
@@ -35,21 +37,22 @@ class StorageClient:
         url = self.storage_address + "/sensor?need_active=true"
 
         sensor_data = []
-        try:
-            response = requests.get(url)
-            response.raise_for_status()
-            sensor_data = response.json()
-        except requests.exceptions.HTTPError as errh:
-            logger.error(f"HTTP Error: {errh}")
-        except requests.exceptions.ConnectionError as errc:
-            logger.error(f"Error Connecting: {errc}")
-        except requests.exceptions.Timeout as errt:
-            logger.error(f"Timeout Error: {errt}")
-        except requests.exceptions.RequestException as err:
-            logger.error(f"Oops: Something Else: {err}")
+        while True:
+            try:
+                response = requests.get(url)
+                response.raise_for_status()
+                sensor_data = response.json()
+                break
+            except requests.exceptions.HTTPError as errh:
+                logger.error(f"HTTP Error: {errh}")
+            except requests.exceptions.ConnectionError as errc:
+                logger.error(f"Error Connecting: {errc}")
+            except requests.exceptions.Timeout as errt:
+                logger.error(f"Timeout Error: {errt}")
+            except requests.exceptions.RequestException as err:
+                logger.error(f"Oops: Something Else: {err}")
 
-        print_sensor_data(sensor_data)
-        print(len(sensor_data))
+        logger.info("Соединение установлено!")
         return sensor_data
 
     def send_measurement_data(self, data: dict[int, dict[int, Any]]):
