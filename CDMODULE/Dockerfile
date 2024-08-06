@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 3005
 
 # Определяем команду для запуска микросервиса  
-CMD ["uvicorn", "uvicorn use_sensor_module:app", "--reload", "--port", "3005"]
+CMD ["python", "main.py"]
