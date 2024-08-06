@@ -13,6 +13,7 @@ with open('config.yaml', 'r') as config_file:
     config = load(config_file, Loader=SafeLoader)
 
 data_storage_address = config['SDIP']
+data_storage_port = config['SDPORT']
 continue_running = True
 logger = logging.getLogger("SensorsModule")
 
@@ -22,22 +23,23 @@ class SensorsModule:
     asker = None
     storage_client: StorageClient
     customer_settings: CustomerSettings
+    logger.debug("module starting")
 
     def __init__(self):
-        self.storage_client = StorageClient(data_storage_address)
+        self.storage_client = StorageClient(f'http://{data_storage_address}:{data_storage_port}')
         self.customer_settings = CustomerSettings()
         sensor_data = self.storage_client.fetch_sensor_data()
 
         self.sensors = self.customer_settings.create_sensors_from_response(sensor_data)
         print(len(self.sensors))
 
-    def start(self, callback: Callable[[dict[str, dict[str, Any]]], None]):
+    def start(self): # callback: Callable[[dict[str, dict[str, Any]]], None]
         logger.debug("module starting")
 
         def send_and_callback(data: dict[int, dict[int, Any]]):
             self.storage_client.send_measurement_data(data)
             verbose = self.made_measurement_verbose(data)
-            callback(verbose)
+            # callback(verbose)
 
         self.asker = threading.Thread(
             target=lambda: repeat_every_n_seconds(send_and_callback, self.read_sensors)
@@ -52,6 +54,11 @@ class SensorsModule:
         continue_running = False
         self.asker.join()
         logger.info("module stopped")
+        
+    def action(self):
+        data = self.read_sensors()
+        self.storage_client.send_measurement_data(data)
+        logger.info(self.made_measurement_verbose(data))
 
     def read_sensors(self) -> dict[int, dict[int, Any]]:
         logger.debug("reading sensors")
