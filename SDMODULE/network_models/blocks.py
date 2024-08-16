@@ -23,6 +23,7 @@ class MLModelGet(BaseModel):
     id: Optional[int] = None
     name: str
     description: Optional[str] = None
+    type: Optional[str] = None
 
 
 class SensorBlockinfo(BaseModel):
@@ -30,10 +31,16 @@ class SensorBlockinfo(BaseModel):
     sensor_item_id: int
 
 
+class RelationBlockinfo(BaseModel):
+    source_property_id: int
+    source_block_id: int
+
+
 class BlockModelGet(BaseModel):
     id: int
     name: str
     sensors: List[SensorBlockinfo] = None
+    relation_blocks: List[RelationBlockinfo] = None
     model: MLModelGet = None
     properties: List[PropertyGet] = None
     active: bool
@@ -47,7 +54,7 @@ class BlockModelPost(BaseModel):
 
 
 class PredictionGet(BaseModel):
-    id: int
+    query_id: str
     insert_ts: int
     m_data: float
     property_id: int
@@ -89,7 +96,13 @@ class PropertyPost(BaseModel):
 
 
 class ModelMappingGet(BaseModel):
+    source_type: Optional[str] = None
+
+    source_block_id: Optional[int] = None
+    source_property_id: Optional[int] = None
+
     measurement_source_id: Optional[int] = None
     sensor_item_id: Optional[int] = None
+
     model_id: Optional[int] = None
     property_id: Optional[int] = None

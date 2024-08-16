@@ -59,17 +59,6 @@ CREATE TABLE IF NOT EXISTS files
     filehash    VARCHAR(255) NOT NULL
 );
 
--- Информация о файлах, полученных от потковых методов неразрушаемого контроля
-CREATE TABLE IF NOT EXISTS raw_data
-(
-    m_data                TEXT NOT NULL,
-    block_id INT  NOT NULL,
-    file_id INT NOT NULL,
-    PRIMARY KEY (block_id, file_id),
-    FOREIGN KEY (block_id) REFERENCES blocks (id),
-    FOREIGN KEY (file_id) REFERENCES files (id)
-);
-
 -- Возможные другие данные
 CREATE TABLE IF NOT EXISTS measurement
 (
@@ -89,6 +78,17 @@ CREATE TABLE IF NOT EXISTS blocks (
     name VARCHAR(50) NOT NULL,
     active BOOLEAN NOT NULL,
     PRIMARY KEY (id)
+);
+
+-- Информация о файлах, полученных от потковых методов неразрушаемого контроля
+CREATE TABLE IF NOT EXISTS raw_data
+(
+    m_data                TEXT NOT NULL,
+    block_id INT  NOT NULL,
+    file_id INT NOT NULL,
+    PRIMARY KEY (block_id, file_id),
+    FOREIGN KEY (block_id) REFERENCES blocks (id),
+    FOREIGN KEY (file_id) REFERENCES files (id)
 );
 
 -- Измеряемые свойства продукта
@@ -115,15 +115,30 @@ CREATE TABLE IF NOT EXISTS models (
 -- Связка для моделей и датчиков
 CREATE TABLE IF NOT EXISTS model_mapping (
     id INT NOT NULL AUTO_INCREMENT,
-    measurement_source_id INT NOT NULL,
-    sensor_item_id INT NOT NULL,
     model_id INT NOT NULL,
     property_id INT NOT NULL,
+
+    -- Тип источника либо 'sensor' либо 'block'
+    source_type VARCHAR(50) NOT NULL,
+
+    -- Для датчика
+    measurement_source_id INT DEFAULT NULL,
+    sensor_item_id INT DEFAULT NULL,
+
+    -- Для блока
+    block_id INT DEFAULT NULL,
+    property_source_id INT DEFAULT NULL,
+
+
     PRIMARY KEY (id),
+    FOREIGN KEY (model_id) REFERENCES models(id),
+    FOREIGN KEY (property_id) REFERENCES property(id),
+
     FOREIGN KEY (measurement_source_id) REFERENCES measurement_source(id),
     FOREIGN KEY (sensor_item_id) REFERENCES sensor_item(id),
-    FOREIGN KEY (model_id) REFERENCES models(id),
-    FOREIGN KEY (property_id) REFERENCES property(id)
+
+    FOREIGN KEY (block_id) REFERENCES blocks(id),
+    FOREIGN KEY (property_source_id) REFERENCES property(id)
 );
 
 -- Предсказания, сделанные моделью

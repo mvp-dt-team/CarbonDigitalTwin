@@ -72,9 +72,11 @@ def blocks_router(storage: MySQLStorage):
 
     @router.get("/prediction")
     async def get_predictions(
-        block_id: int = Query(...), n_predictions: int = Query(...)
+        block_id: int = Query(...),
+        property_id: int = Query(...),
+        n_predictions: int = Query(...),
     ) -> List[PredictionGet]:
-        response = storage.get_predictions(block_id, n_predictions)
+        response = storage.get_predictions(block_id, property_id, n_predictions)
         if type(response) is dict and response.get("status_code") != 200:
             raise HTTPException(
                 status_code=response["status_code"], detail=response["detail"]
@@ -117,6 +119,8 @@ def blocks_router(storage: MySQLStorage):
         file: UploadFile = File(...),
         measurement_source_ids: Annotated[list[int], Query()] = [],
         sensor_item_ids: Annotated[list[int], Query()] = [],
+        source_block_ids: Annotated[list[int], Query()] = [],
+        source_property_ids: Annotated[list[int], Query()] = [],
         properties_ids: Annotated[list[int], Query()] = [],
     ):
 
@@ -124,6 +128,8 @@ def blocks_router(storage: MySQLStorage):
         if (
             len(measurement_source_ids) != len(sensor_item_ids)
             or len(properties_ids) == 0
+            or len(source_block_ids) != len(source_property_ids)
+            or block_id in source_block_ids
         ):
             raise HTTPException(400, "Data is incorrected")
 
@@ -149,6 +155,13 @@ def blocks_router(storage: MySQLStorage):
                     "sensor_item_id": sensor_item_ids[i],
                 }
                 for i in range(len(measurement_source_ids))
+            ],
+            source_blocks=[
+                {
+                    "source_block_id": source_block_ids[i],
+                    "source_property_id": source_property_ids[i],
+                }
+                for i in range(len(source_property_ids))
             ],
             properties=properties_ids,
         )

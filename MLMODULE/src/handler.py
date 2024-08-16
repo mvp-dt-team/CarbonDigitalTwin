@@ -4,22 +4,40 @@ import hashlib
 from datetime import datetime, timezone
 import time
 import requests
-from PIL import Image
-from queue import Queue
-import io
 import os
 import uuid
 
 import random
 
 from blocks import Block
-from models import Model
+from models import initialize_model
 from sources import Source
 from pathlib import Path
 
+from functools import wraps
+
+import warnings
+
+warnings.filterwarnings("ignore", module="sklearn")
+
+
+def timeit(func):
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        start_time = time.time()
+        result = func(self, *args, **kwargs)
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        self.logger.debug(
+            f"Функция {func.__name__} выполнена за {elapsed_time:.6f} секунд"
+        )
+        return result
+
+    return wrapper
+
+
 """
-Для конфига, нужен адрес и порт SD
-Нужен эндпоинт для получение блоков
+реконнекшен для сессии
 """
 
 
@@ -27,6 +45,7 @@ class Handler:
     def __init__(self, config) -> None:
         self.status = 0
         self.running = True
+        self.session = requests.Session()
 
         self.blocks: List[Block] = []
         self.polling_interval: int = config["POLLINT"]
@@ -47,19 +66,33 @@ class Handler:
         self.logger.addHandler(console_handler)
         self.logger.info("Инициализация обработчика")
 
+    @timeit
     def init_block_data(self) -> None:
         self.blocks = []
-        block_data = requests.get(f"{self.url}/blocks?need_active=true").json()
+        block_data = self.session.get(f"{self.url}/blocks/?need_active=true").json()
         for block in block_data:
             if block["model"] is None:
                 continue
             sensors = [
-                Source(measurement_source_id=sensor["measurement_source_id"])
+                Source(
+                    source_point_id=sensor["measurement_source_id"],
+                    source_id=sensor["sensor_item_id"],
+                    source_type="sensor",
+                )
                 for sensor in block["sensors"]
             ]
 
-            status_response = requests.get(
-                f"http://127.0.0.1:3000/blocks/models/check/{block['model']['id']}"
+            for relation_block in block["relation_blocks"]:
+                sensors.append(
+                    Source(
+                        source_point_id=relation_block["source_property_id"],
+                        source_id=relation_block["source_block_id"],
+                        source_type="block",
+                    )
+                )
+
+            status_response = self.session.get(
+                f"{self.url}/blocks/models/check/{block['model']['id']}"
             ).json()
             models_files = [filename for filename in os.listdir(self.models_folder)]
             if status_response["file_name"] in models_files:
@@ -70,8 +103,8 @@ class Handler:
                     hash_file = hashlib.sha256(model_file.read())
                     if hash_file.hexdigest() != status_response["file_hash"]:
                         self.logger.debug("У файла не тот хэш, устанавливаю его")
-                        file = requests.get(
-                            f"http://127.0.0.1:3000/blocks/models/{block['model']['id']}"
+                        file = self.session.get(
+                            f"{self.url}/blocks/models/{block['model']['id']}"
                         )
                         with open(
                             f"{self.models_folder}/{status_response['file_name']}", "wb"
@@ -80,8 +113,8 @@ class Handler:
                                 f.write(chunk)
             else:
                 self.logger.debug("Файла нет, устанавливаю его")
-                file = requests.get(
-                    f"http://127.0.0.1:3000/blocks/models/{block['model']['id']}"
+                file = self.session.get(
+                    f"{self.url}/blocks/models/{block['model']['id']}"
                 )
                 with open(
                     f"{self.models_folder}/{status_response['file_name']}", "wb"
@@ -89,7 +122,8 @@ class Handler:
                     for chunk in file.iter_content(1024):
                         f.write(chunk)
 
-            model = Model(
+            model = initialize_model(
+                model_name=block["model"]["type"],
                 id=block["model"]["id"],
                 model_path=f"{self.models_folder}/{status_response['file_name']}",
             )
@@ -116,7 +150,7 @@ class Handler:
                 }
                 for i in range(len(data))
             ]
-            response = requests.post(
+            response = self.session.post(
                 url=f"{self.url}/blocks/prediction",
                 json={
                     "insert_ts": current_time.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
@@ -133,28 +167,42 @@ class Handler:
             self.logger.error(f"Ошибка при записи в БД: {e}")
             return 1
 
+    @timeit
     def workflow(self, block: Block):
+        start_time = time.time()
         self.logger.debug(f"Получение данных для блока {block.id}")
-        data = block.poll_sensors(self.url)
+        data = block.poll_sensors(self.url, self.session)
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        self.logger.debug(f"ДАННЫЕ: {elapsed_time:.6f} секунд")
 
-        # TODO predict_value: Union[List[int], List[float]] = block.model.predict(data)
+        start_time = time.time()
         self.logger.debug(f"Получение предсказания для блока {block.id}")
-        predict_value: Union[List[int], List[float]] = [
-            random.random() for _ in range(len(block.properties))
-        ]
-        time.sleep(0.8)
+        predict_value: Union[List[int], List[float]] = block.model.predict(data)
+        time.sleep(0.8)  # Заглушка для модели
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        self.logger.debug(f"ПРЕДСКАЗАНИЕ: {elapsed_time:.6f} секунд")
 
         self.logger.info(f"Отправка данных блока {block.id} на сервер")
+        start_time = time.time()
         self.write_db_data(data=predict_value, block=block)
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        self.logger.debug(f"ОТПРАВЛЕНИЕ: {elapsed_time:.6f} секунд")
 
     # TODO Переделать отправку данных, для отправки пакета данных по всем блокам, а не делать милион запросов для отправки каждого предсказания
     def action(self):
         self.logger.info(f"Инициализация блоков")
+        start_time = time.time()
         self.init_block_data()
         for block in self.blocks:
             self.workflow(block)
-        self.logger.info(f"Ожидание...")
-        time.sleep(self.polling_interval)
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        if self.polling_interval - elapsed_time > 0:
+            self.logger.info(f"Ожидание...")
+            time.sleep(self.polling_interval - elapsed_time)
 
     def stop(self) -> None:
         self.running = False

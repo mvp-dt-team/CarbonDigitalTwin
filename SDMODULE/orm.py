@@ -1,5 +1,4 @@
 from sqlalchemy import (
-    create_engine,
     Column,
     Integer,
     String,
@@ -11,15 +10,28 @@ from sqlalchemy import (
     Float,
     BigInteger,
 )
+
+import asyncio
+
+from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm import relationship
+from sqlalchemy.ext.asyncio import async_sessionmaker
 from datetime import datetime
 from sqlalchemy.sql import text
 
 # from config_reader import config
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.ext.asyncio import AsyncAttrs
 
 # Определение базового класса для декларативного стиля
-Base = declarative_base()
+# Base = declarative_base()
+
+
+class Base(AsyncAttrs, DeclarativeBase):
+    pass
+
 
 from yaml import load
 from yaml.loader import SafeLoader
@@ -82,7 +94,7 @@ class RawDataModel(Base):
 
 class MeasurementModel(Base):
     __tablename__ = "measurement"
-    query_id = Column(VARCHAR(36), primary_key=True, nullable=False, autoincrement=True)
+    query_id = Column(VARCHAR(36), primary_key=True, nullable=False)
     insert_ts = Column(Integer, primary_key=True, nullable=False)
     m_data = Column(Float, nullable=False)
     measurement_source_id = Column(
@@ -129,13 +141,35 @@ class FileModel(Base):
 
 class ModelMappingModel(Base):
     __tablename__ = "model_mapping"
+
     id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # Тип источника данных: 'sensor' или 'block'
+    source_type = Column(VARCHAR(50), nullable=False)
+
+    # Поля для сенсоров
     measurement_source_id = Column(
-        Integer, ForeignKey("measurement_source.id"), nullable=False
+        Integer, ForeignKey("measurement_source.id"), nullable=True
     )
-    sensor_item_id = Column(Integer, ForeignKey("sensor_item.id"), nullable=False)
+    sensor_item_id = Column(Integer, ForeignKey("sensor_item.id"), nullable=True)
+
+    # Поля для блоков
+    block_id = Column(Integer, ForeignKey("blocks.id"), nullable=True)
+    property_source_id = Column(Integer, ForeignKey("property.id"), nullable=True)
+
+    # Общие поля
     model_id = Column(Integer, ForeignKey("models.id"), nullable=False)
     property_id = Column(Integer, ForeignKey("property.id"), nullable=False)
+
+    # Связи (relationship)
+    measurement_source = relationship(
+        "MeasurementSourceModel", foreign_keys=[measurement_source_id]
+    )
+    sensor_item = relationship("SensorItemModel", foreign_keys=[sensor_item_id])
+    block = relationship("BlockModel", foreign_keys=[block_id])
+    property_source = relationship("PropertyModel", foreign_keys=[property_source_id])
+    model = relationship("ModelsModel", foreign_keys=[model_id])
+    property = relationship("PropertyModel", foreign_keys=[property_id])
 
 
 class PredictionModel(Base):
@@ -166,16 +200,18 @@ class PredictionModel(Base):
 
 # Создание экземпляра двигателя
 # engine = create_engine('sqlite:///app.db')
-engine = create_engine(
-    f"mysql+pymysql://{config['USER']}:{config['PASSWORD']}@{config['HOST']}:3306/{config['DB']}"
-)
+# engine = create_async_engine(
+#     f"mysql+aiomysql://{config['USER']}:{config['PASSWORD']}@{config['HOST']}:3306/{config['DB']}"
+# )
 
-# Создание сессии
-Session = sessionmaker(bind=engine)
-session = Session()
+# # Создание сессии
+# Session = async_sessionmaker(bind=engine)
+# session = Session()
 
-# Создание всех таблиц
-Base.metadata.create_all(engine)
+# async with engine.begin() as conn:
+#     await conn.run_sync(Base.metadata.create_all)
+# # Создание всех таблиц
+# Base.metadata.create_all(engine)
 
-# Закрытие сессии
-session.close()
+# # Закрытие сессии
+# session.close()

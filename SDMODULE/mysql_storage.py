@@ -3,6 +3,8 @@ from typing import List
 from sqlalchemy import create_engine, desc
 from functools import wraps
 from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import aliased
+from sqlalchemy.sql import func
 from orm import (
     FileModel,
     ModelMappingModel,
@@ -35,9 +37,10 @@ from network_models.blocks import (
     PropertyPost,
     PredictionGet,
     PredictionPost,
+    RelationBlockinfo,
 )
 
-
+import time
 from yaml import load
 from yaml.loader import SafeLoader
 
@@ -57,6 +60,7 @@ def sqlalchemy_session(engine_url):
         @wraps(func)
         def wrapper(*args, **kwargs):
             # Создание соединения с базой данных
+            start_time = time.time()
             engine = create_engine(engine_url)
             session_current = sessionmaker(bind=engine)
             session = session_current()
@@ -64,13 +68,17 @@ def sqlalchemy_session(engine_url):
             try:
                 # Вызов функции с передачей сессии в качестве аргумента
                 result = func(*args, session=session, **kwargs)
+
                 session.commit()  # Фиксация всех изменений в базе данных
-                return result
             except Exception as e:
                 session.rollback()  # Отмена всех изменений в случае ошибки
                 raise e
             finally:
                 session.close()  # Закрытие сессии после завершения работы
+                end_time = time.time()
+                elapsed_time = end_time - start_time
+                # print(f"Всего: {elapsed_time:.6f} секунд")
+                return result
 
         return wrapper
 
@@ -325,6 +333,9 @@ class MySQLStorage:
                 block_model = model_list[-1]
                 blocks[block] = [
                     ModelMappingGet(
+                        source_type=x.source_type,
+                        source_block_id=x.block_id,
+                        source_property_id=x.property_source_id,
                         measurement_source_id=x.measurement_source_id,
                         sensor_item_id=x.sensor_item_id,
                         model_id=x.model_id,
@@ -336,6 +347,9 @@ class MySQLStorage:
                 ]
             else:
                 blocks[block] = ModelMappingGet(
+                    source_type=None,
+                    source_block_id=None,
+                    source_property_id=None,
                     measurement_source_id=None,
                     sensor_item_id=None,
                     model_id=None,
@@ -350,12 +364,23 @@ class MySQLStorage:
                     BlockModelGet(id=block.id, name=block.name, active=block.active)
                 )
             else:
-                print(content)
+                # print(content)
                 sensors_set = []
                 for i in content:
-                    if (i.measurement_source_id, i.sensor_item_id) not in sensors_set:
-                        sensors_set.append((i.measurement_source_id, i.sensor_item_id))
-
+                    if i.source_type == "sensor":
+                        if (
+                            i.measurement_source_id,
+                            i.sensor_item_id,
+                        ) not in sensors_set:
+                            sensors_set.append(
+                                (i.measurement_source_id, i.sensor_item_id)
+                            )
+                blocks_set = []
+                for i in content:
+                    if i.source_type == "block":
+                        if (i.source_property_id, i.source_block_id) not in blocks_set:
+                            blocks_set.append((i.source_property_id, i.source_block_id))
+                # print(sensors_set)
                 sensors = [
                     SensorBlockinfo(
                         measurement_source_id=x[0],
@@ -363,6 +388,14 @@ class MySQLStorage:
                     )
                     for x in sensors_set
                 ]
+                relation_blocks = [
+                    RelationBlockinfo(
+                        source_property_id=x[0],
+                        source_block_id=x[1],
+                    )
+                    for x in blocks_set
+                ]
+                # print(relation_blocks)
                 model_data = (
                     session.query(ModelsModel)
                     .filter(ModelsModel.id == content[0].model_id)
@@ -382,10 +415,12 @@ class MySQLStorage:
                         id=block.id,
                         name=block.name,
                         sensors=sensors,
+                        relation_blocks=relation_blocks,
                         model=MLModelGet(
                             id=model_data.id,
                             name=model_data.name,
                             description=model_data.description,
+                            type=model_data.type,
                         ),
                         properties=[
                             PropertyGet(id=x.id, name=x.name, unit=x.unit)
@@ -401,11 +436,10 @@ class MySQLStorage:
         self,
         model_params: dict,
         sensors: List[dict],
+        source_blocks: List[dict],
         properties: List[int],
         session: Session,
     ):
-        print(sensors)
-
         new_file = FileModel(
             description=model_params["description"],
             path=model_params["file_path"],
@@ -430,6 +464,18 @@ class MySQLStorage:
                 model_map = ModelMappingModel(
                     measurement_source_id=sensor["measurement_source_id"],
                     sensor_item_id=sensor["sensor_item_id"],
+                    source_type="sensor",
+                    model_id=new_model.id,
+                    property_id=property,
+                )
+                session.add(model_map)
+
+        for block in source_blocks:
+            for property in properties:
+                model_map = ModelMappingModel(
+                    property_source_id=block["source_property_id"],
+                    block_id=block["source_block_id"],
+                    source_type="block",
                     model_id=new_model.id,
                     property_id=property,
                 )
@@ -508,7 +554,9 @@ class MySQLStorage:
         }
 
     @sqlalchemy_session(engine_url)
-    def get_predictions(self, block_id: int, n_predictions: int, session: Session):
+    def get_predictions(
+        self, block_id: int, property_id: int, n_predictions: int, session: Session
+    ):
         if session.get(BlockModel, block_id) is None:
             return {
                 "status_code": 404,
@@ -518,13 +566,14 @@ class MySQLStorage:
         predictions_data = (
             session.query(PredictionModel)
             .filter(PredictionModel.block_id == block_id)
-            .order_by(desc(PredictionModel.id))
+            .filter(PredictionModel.property_id == property_id)
+            .order_by(desc(PredictionModel.insert_ts))
             .limit(n_predictions)
             .all()
         )
         predictions = [
             PredictionGet(
-                id=prediction.id,
+                query_id=prediction.query_id,
                 insert_ts=prediction.insert_ts,
                 m_data=prediction.m_data,
                 property_id=prediction.property_id,

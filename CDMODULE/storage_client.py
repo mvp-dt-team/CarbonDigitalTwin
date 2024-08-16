@@ -33,6 +33,7 @@ def print_sensor_data(sensor_data: List[Any]):
 class StorageClient:
     def __init__(self, storage_address):
         self.storage_address = storage_address
+        self.session = requests.Session()
 
     def fetch_sensor_data(self) -> List[Any]:
         url = self.storage_address + "/sensor?need_active=true"
@@ -40,7 +41,7 @@ class StorageClient:
         sensor_data = []
         while True:
             try:
-                response = requests.get(url)
+                response = self.session.get(url)
                 response.raise_for_status()
                 sensor_data = response.json()
                 break
@@ -74,11 +75,11 @@ class StorageClient:
                 query_uuid=str(uuid.uuid4()),
             )
 
-            url = self.storage_address + "/measurement"
+            url = self.storage_address + "/measurement/"
             try:
                 headers = {"Content-Type": "application/json"}
 
-                response = requests.post(
+                response = self.session.post(
                     url, data=sent_data.model_dump_json(), headers=headers
                 )
                 logger.info(
