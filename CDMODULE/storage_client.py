@@ -1,8 +1,9 @@
 import datetime
 import logging
 from typing import List, Any
-import time
+
 import requests
+import uuid
 
 from network_models.measurements_info import MeasurementsPost, MeasurementsGet
 
@@ -51,8 +52,6 @@ class StorageClient:
                 logger.error(f"Timeout Error: {errt}")
             except requests.exceptions.RequestException as err:
                 logger.error(f"Oops: Something Else: {err}")
-            finally:
-                time.sleep(5)
 
         logger.info("Соединение установлено!")
         return sensor_data
@@ -70,7 +69,9 @@ class StorageClient:
                     )
                 )
             sent_data = MeasurementsPost(
-                insert_ts=datetime.datetime.now(), insert_values=values
+                insert_ts=datetime.datetime.now(),
+                insert_values=values,
+                query_uuid=str(uuid.uuid4()),
             )
 
             url = self.storage_address + "/measurement"

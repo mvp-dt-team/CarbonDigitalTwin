@@ -6,17 +6,19 @@ import os
 
 from yaml import load
 from yaml.loader import SafeLoader
-with open('config.yaml', 'r') as config_file:
+
+with open("config.yaml", "r") as config_file:
     config = load(config_file, Loader=SafeLoader)
 
 """
 RESUME
 """
-URL = 'http://' + config['SDIP'] + ':' + str(config['SDPORT'])
+URL = "http://" + config["SDIP"] + ":" + str(config["SDPORT"])
 
 models_folder = "uploads"
 
 from pathlib import Path
+
 Path(models_folder).mkdir(parents=True, exist_ok=True)
 
 if not os.path.exists(models_folder):

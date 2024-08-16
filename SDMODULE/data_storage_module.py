@@ -11,7 +11,8 @@ import logging
 
 from yaml import load
 from yaml.loader import SafeLoader
-with open('config.yaml', 'r') as config_file:
+
+with open("config.yaml", "r") as config_file:
     config = load(config_file, Loader=SafeLoader)
 
 # Настройки MySQL
@@ -23,10 +24,8 @@ with open('config.yaml', 'r') as config_file:
 storage = MySQLStorage()
 
 app = FastAPI()
-    
-logging.basicConfig(
-    level=logging.INFO, filename=config['LOGNAME'], encoding="utf8"
-)
+
+logging.basicConfig(level=logging.INFO, filename=config["LOGNAME"], encoding="utf8")
 
 # Temporary Redirect возникает из-за префиксов роутера, возможно, они используются как-то неверно
 app.include_router(

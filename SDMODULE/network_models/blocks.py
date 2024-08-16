@@ -61,6 +61,7 @@ class PredictionPost(BaseModel):
 
 
 class PredictionMassivePost(BaseModel):
+    query_uuid: str
     insert_ts: datetime
     insert_values: List[PredictionPost]
 

@@ -15,6 +15,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
 from sqlalchemy.sql import text
+
 # from config_reader import config
 
 # Определение базового класса для декларативного стиля
@@ -22,9 +23,9 @@ Base = declarative_base()
 
 from yaml import load
 from yaml.loader import SafeLoader
-with open('config.yaml', 'r') as config_file:
+
+with open("config.yaml", "r") as config_file:
     config = load(config_file, Loader=SafeLoader)
-    
 
 
 # Определение моделей
@@ -72,7 +73,7 @@ class SensorParamsModel(Base):
 
 class RawDataModel(Base):
     __tablename__ = "raw_data"
-    query_id = Column(BigInteger, primary_key=True, nullable=False, autoincrement=True)
+    query_id = Column(VARCHAR(36), primary_key=True, nullable=False, autoincrement=True)
     m_data = Column(Text, nullable=False)
     measurement_source_id = Column(
         Integer, ForeignKey("measurement_source.id"), primary_key=True
@@ -81,8 +82,8 @@ class RawDataModel(Base):
 
 class MeasurementModel(Base):
     __tablename__ = "measurement"
-    query_id = Column(BigInteger, primary_key=True, nullable=False, autoincrement=True)
-    insert_ts = Column(Integer, nullable=False)
+    query_id = Column(VARCHAR(36), primary_key=True, nullable=False, autoincrement=True)
+    insert_ts = Column(Integer, primary_key=True, nullable=False)
     m_data = Column(Float, nullable=False)
     measurement_source_id = Column(
         Integer, ForeignKey("measurement_source.id"), primary_key=True
@@ -94,7 +95,7 @@ class MeasurementModel(Base):
 
 
 class BlockModel(Base):
-    __tablename__ = "block"
+    __tablename__ = "blocks"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), nullable=False)
     active = Column(Boolean, nullable=False)
@@ -114,7 +115,7 @@ class ModelsModel(Base):
     description = Column(String(500))
     type = Column(String(50), nullable=False)
     file_id = Column(Integer, ForeignKey("files.id"), nullable=False)
-    block_id = Column(Integer, ForeignKey("block.id"), nullable=False)
+    block_id = Column(Integer, ForeignKey("blocks.id"), nullable=False)
 
 
 class FileModel(Base):
@@ -122,6 +123,8 @@ class FileModel(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     description = Column(VARCHAR(255), nullable=False)
     path = Column(VARCHAR(255), nullable=False)
+    filename = Column(VARCHAR(255), nullable=False)
+    filehash = Column(VARCHAR(255), nullable=False)
 
 
 class ModelMappingModel(Base):
@@ -137,11 +140,13 @@ class ModelMappingModel(Base):
 
 class PredictionModel(Base):
     __tablename__ = "prediction"
-    id = Column(Integer, nullable=False, primary_key=True, autoincrement=True)
+    query_id = Column(VARCHAR(36), nullable=False, primary_key=True)
     insert_ts = Column(Integer, nullable=False, primary_key=True)
     m_data = Column(Float, nullable=False)
-    property_id = Column(Integer, ForeignKey("property.id"), nullable=False)
-    block_id = Column(Integer, ForeignKey("block.id"), nullable=False)
+    property_id = Column(
+        Integer, ForeignKey("property.id"), nullable=False, primary_key=True
+    )
+    block_id = Column(Integer, ForeignKey("blocks.id"), nullable=False)
 
 
 # НЕОБХОДИМО ПРОПИСАТЬ ОТ SUPER НА СЕРВЕРЕ MYSQL

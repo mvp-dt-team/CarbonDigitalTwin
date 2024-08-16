@@ -9,11 +9,12 @@ from storage_client import StorageClient
 
 from yaml import load
 from yaml.loader import SafeLoader
-with open('config.yaml', 'r') as config_file:
+
+with open("config.yaml", "r") as config_file:
     config = load(config_file, Loader=SafeLoader)
 
-data_storage_address = config['SDIP']
-data_storage_port = config['SDPORT']
+data_storage_address = config["SDIP"]
+data_storage_port = config["SDPORT"]
 continue_running = True
 logger = logging.getLogger("SensorsModule")
 
@@ -26,13 +27,15 @@ class SensorsModule:
     logger.debug("module starting")
 
     def __init__(self):
-        self.storage_client = StorageClient(f'http://{data_storage_address}:{data_storage_port}')
+        self.storage_client = StorageClient(
+            f"http://{data_storage_address}:{data_storage_port}"
+        )
         self.customer_settings = CustomerSettings()
         sensor_data = self.storage_client.fetch_sensor_data()
 
         self.sensors = self.customer_settings.create_sensors_from_response(sensor_data)
 
-    def start(self): # callback: Callable[[dict[str, dict[str, Any]]], None]
+    def start(self):  # callback: Callable[[dict[str, dict[str, Any]]], None]
         logger.debug("module starting")
 
         def send_and_callback(data: dict[int, dict[int, Any]]):
@@ -53,7 +56,7 @@ class SensorsModule:
         continue_running = False
         self.asker.join()
         logger.info("module stopped")
-        
+
     def action(self):
         data = self.read_sensors()
         self.storage_client.send_measurement_data(data)
@@ -81,7 +84,7 @@ class SensorsModule:
 
 
 def repeat_every_n_seconds(callback, task):
-    n = config['POLLINT']
+    n = config["POLLINT"]
     global continue_running
     while continue_running:
         callback(task())

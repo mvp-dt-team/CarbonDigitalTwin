@@ -17,7 +17,9 @@ def get_measurements_router(storage: MySQLStorage):
     async def add_measurement(request: MeasurementsPost):
         for measurement in request.insert_values:
             try:
-                storage.add_measurement(measurement, request.insert_ts)
+                storage.add_measurement(
+                    measurement, request.insert_ts, request.query_uuid
+                )
             except IntegrityError as e:
                 if "Duplicate entry" in str(e):
                     raise HTTPException(

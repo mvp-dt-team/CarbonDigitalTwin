@@ -40,7 +40,8 @@ from network_models.blocks import (
 
 from yaml import load
 from yaml.loader import SafeLoader
-with open('config.yaml', 'r') as config_file:
+
+with open("config.yaml", "r") as config_file:
     config = load(config_file, Loader=SafeLoader)
 
 import logging
@@ -78,7 +79,7 @@ def sqlalchemy_session(engine_url):
 
 class MySQLStorage:
     engine_url = f"mysql+pymysql://{config['USER']}:{config['PASSWORD']}@{config['HOST']}:3306/{config['DB']}"
-    
+
     # FOR TESTING !
     # engine_url = f'sqlite:///app.db'
     # def close(self):
@@ -89,9 +90,14 @@ class MySQLStorage:
 
     @sqlalchemy_session(engine_url)
     def add_measurement(
-        self, measurement: MeasurementsGet, insert_ts: datetime, session: Session
+        self,
+        measurement: MeasurementsGet,
+        insert_ts: datetime,
+        query_uuid: str,
+        session: Session,
     ) -> None:
         measurement_new = MeasurementModel(
+            query_id=query_uuid,
             insert_ts=int(insert_ts.timestamp()),
             m_data=measurement.m_data,
             sensor_item_id=measurement.sensor_item_id,
@@ -344,9 +350,12 @@ class MySQLStorage:
                     BlockModelGet(id=block.id, name=block.name, active=block.active)
                 )
             else:
-                sensors_set = set()
+                print(content)
+                sensors_set = []
                 for i in content:
-                    sensors_set.add((i.measurement_source_id, i.sensor_item_id))
+                    if (i.measurement_source_id, i.sensor_item_id) not in sensors_set:
+                        sensors_set.append((i.measurement_source_id, i.sensor_item_id))
+
                 sensors = [
                     SensorBlockinfo(
                         measurement_source_id=x[0],
@@ -359,7 +368,11 @@ class MySQLStorage:
                     .filter(ModelsModel.id == content[0].model_id)
                     .first()
                 )
-                properties_ids = set([x.property_id for x in content])
+                properties_ids = []
+                for i in content:
+                    if i.property_id not in properties_ids:
+                        properties_ids.append(i.property_id)
+
                 property_data = [
                     session.query(PropertyModel).filter(PropertyModel.id == x).first()
                     for x in properties_ids
@@ -391,8 +404,13 @@ class MySQLStorage:
         properties: List[int],
         session: Session,
     ):
+        print(sensors)
+
         new_file = FileModel(
-            description=model_params["description"], path=model_params["file_path"]
+            description=model_params["description"],
+            path=model_params["file_path"],
+            filename=model_params["file_name"],
+            filehash=model_params["file_hash"],
         )
         session.add(new_file)
         session.flush()
@@ -470,6 +488,26 @@ class MySQLStorage:
         }
 
     @sqlalchemy_session(engine_url)
+    def check_model(self, model_id: int, session):
+        model: ModelsModel = (
+            session.query(ModelsModel).filter(ModelsModel.id == model_id).first()
+        )
+        if not model:
+            return {"status_code": 404, "detail": "Model not found"}
+        file: FileModel = (
+            session.query(FileModel).filter(FileModel.id == model.file_id).first()
+        )
+        if not file:
+            return {"status_code": 404, "detail": "Model file not found"}
+
+        return {
+            "status_code": 200,
+            "detail": "Ok",
+            "file_name": file.filename,
+            "file_hash": file.filehash,
+        }
+
+    @sqlalchemy_session(engine_url)
     def get_predictions(self, block_id: int, n_predictions: int, session: Session):
         if session.get(BlockModel, block_id) is None:
             return {
@@ -497,8 +535,11 @@ class MySQLStorage:
         return predictions
 
     @sqlalchemy_session(engine_url)
-    def add_prediction(self, prediction: PredictionPost, insert_ts: datetime, session):
+    def add_prediction(
+        self, prediction: PredictionPost, insert_ts: datetime, query_uuid: str, session
+    ):
         pred = PredictionModel(
+            query_id=query_uuid,
             insert_ts=int(insert_ts.timestamp()),
             m_data=prediction.m_data,
             property_id=prediction.property_id,

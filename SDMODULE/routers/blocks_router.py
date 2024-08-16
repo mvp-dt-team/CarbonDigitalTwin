@@ -18,6 +18,8 @@ from mysql_storage import MySQLStorage
 from mysql.connector import IntegrityError
 
 import os
+import hashlib
+
 
 UPLOAD_FOLDER = "uploads"
 
@@ -58,6 +60,16 @@ def blocks_router(storage: MySQLStorage):
             filename=response["file_path"].split("/")[-1],
         )
 
+    @router.get("/models/check/{model_id}")
+    async def check_model(model_id: int):
+        response = storage.check_model(model_id)
+        if response["status_code"] != 200:
+            raise HTTPException(
+                status_code=response["status_code"], detail=response["detail"]
+            )
+
+        return response
+
     @router.get("/prediction")
     async def get_predictions(
         block_id: int = Query(...), n_predictions: int = Query(...)
@@ -74,7 +86,9 @@ def blocks_router(storage: MySQLStorage):
 
         for prediction in request.insert_values:
             try:
-                storage.add_prediction(prediction, request.insert_ts)
+                storage.add_prediction(
+                    prediction, request.insert_ts, request.query_uuid
+                )
             except IntegrityError as e:
                 if "Duplicate entry" in str(e):
                     raise HTTPException(
@@ -115,7 +129,9 @@ def blocks_router(storage: MySQLStorage):
 
         file_location = os.path.join(UPLOAD_FOLDER, file.filename)
         with open(file_location, "wb+") as file_object:
-            file_object.write(file.file.read())
+            reads = file.file.read()
+            filehash = hashlib.sha256(reads)
+            file_object.write(reads)
 
         new_id = storage.add_block_params(
             model_params={
@@ -124,6 +140,8 @@ def blocks_router(storage: MySQLStorage):
                 "type_model": type_model,
                 "block_id": block_id,
                 "file_path": file_location,
+                "file_name": file.filename,
+                "file_hash": filehash.hexdigest(),
             },
             sensors=[
                 {

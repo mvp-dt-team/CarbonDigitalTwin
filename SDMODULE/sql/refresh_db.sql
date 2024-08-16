@@ -48,38 +48,39 @@ CREATE TABLE IF NOT EXISTS sensor_params
     FOREIGN KEY (sensor_item_id) REFERENCES sensor_item (id),
     FOREIGN KEY (property_id) REFERENCES measurement_source (id)
 );
--- Информация о файлах, полученных от потковых методов неразрушаемого контроля
-CREATE TABLE IF NOT EXISTS raw_data
-(
-    query_id              INT  NOT NULL,
-    m_data                TEXT NOT NULL,
-    block_id INT  NOT NULL,
-    file_id INT NOT NULL,
-    PRIMARY KEY (query_id, block_id, file_id),
-    FOREIGN KEY (query_id) REFERENCES prediction (query_id),
-    FOREIGN KEY (block_id) REFERENCES blocks (id)
-    FOREIGN KEY (file_id) REFERENCES files (id)
-);
-
--- Возможные другие данные
-CREATE TABLE IF NOT EXISTS measurement
-(
-    query_id              INT   NOT NULL,
-    insert_ts             INT   NOT NULL,
-    m_data                FLOAT NOT NULL,
-    measurement_source_id INT   NOT NULL,
-    sensor_item_id        INT   NOT NULL,
-    PRIMARY KEY (query_id, measurement_source_id),
-    FOREIGN KEY (sensor_item_id) REFERENCES sensor_item (id),
-    FOREIGN KEY (measurement_source_id) REFERENCES measurement_source (id)
-);
 
 -- Хранение файлов
 CREATE TABLE IF NOT EXISTS files
 (
     id          INT PRIMARY KEY AUTO_INCREMENT,
     description VARCHAR(255)         NOT NULL,
-    path        VARCHAR(255) UNIQUE NOT NULL
+    path        VARCHAR(255) UNIQUE NOT NULL,
+    filename    VARCHAR(255) UNIQUE NOT NULL,
+    filehash    VARCHAR(255) NOT NULL
+);
+
+-- Информация о файлах, полученных от потковых методов неразрушаемого контроля
+CREATE TABLE IF NOT EXISTS raw_data
+(
+    m_data                TEXT NOT NULL,
+    block_id INT  NOT NULL,
+    file_id INT NOT NULL,
+    PRIMARY KEY (block_id, file_id),
+    FOREIGN KEY (block_id) REFERENCES blocks (id),
+    FOREIGN KEY (file_id) REFERENCES files (id)
+);
+
+-- Возможные другие данные
+CREATE TABLE IF NOT EXISTS measurement
+(
+    query_id              VARCHAR(36) NOT NULL ,
+    insert_ts             INT   NOT NULL,
+    m_data                FLOAT NOT NULL,
+    measurement_source_id INT   NOT NULL,
+    sensor_item_id        INT   NOT NULL,
+    PRIMARY KEY (query_id, insert_ts, measurement_source_id),
+    FOREIGN KEY (sensor_item_id) REFERENCES sensor_item (id),
+    FOREIGN KEY (measurement_source_id) REFERENCES measurement_source (id)
 );
 
 -- Связка для моделей и датчиков
@@ -127,12 +128,12 @@ CREATE TABLE IF NOT EXISTS model_mapping (
 
 -- Предсказания, сделанные моделью
 CREATE TABLE IF NOT EXISTS prediction (
-    id INT NOT NULL AUTO_INCREMENT,
+    query_id VARCHAR(36) NOT NULL ,
     insert_ts INT NOT NULL,
     m_data FLOAT NOT NULL,
     property_id INT NOT NULL,
     block_id INT NOT NULL,
-    PRIMARY KEY (id),
+    PRIMARY KEY (query_id, insert_ts, property_id),
     FOREIGN KEY (property_id) REFERENCES property(id),
-    FOREIGN KEY (block_id) REFERENCES block(id)
+    FOREIGN KEY (block_id) REFERENCES blocks(id)
 );
