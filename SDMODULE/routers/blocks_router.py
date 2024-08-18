@@ -31,11 +31,11 @@ def blocks_router(storage: MySQLStorage):
 
     @router.get("/", response_model=List[BlockModelGet])
     async def get_block_list(need_active: bool):
-        return storage.get_block_list(need_active)
+        return await storage.get_block_list(need_active)
 
     @router.patch("/{block_id}")
     async def toggle_block(block_id: int):
-        response = storage.toggle_block(block_id)
+        response = await storage.toggle_block(block_id)
         if response["status_code"] != 200:
             raise HTTPException(
                 status_code=response["status_code"], detail=response["detail"]
@@ -44,11 +44,11 @@ def blocks_router(storage: MySQLStorage):
 
     @router.post("/")
     async def add_block(block_data: BlockModelPost):
-        return storage.add_block(block_data)
+        return await storage.add_block(block_data)
 
     @router.get("/models/{model_id}")
     async def get_model(model_id: int):
-        response = storage.get_model(model_id)
+        response = await storage.get_model(model_id)
         if response["status_code"] != 200:
             raise HTTPException(
                 status_code=response["status_code"], detail=response["detail"]
@@ -62,7 +62,7 @@ def blocks_router(storage: MySQLStorage):
 
     @router.get("/models/check/{model_id}")
     async def check_model(model_id: int):
-        response = storage.check_model(model_id)
+        response = await storage.check_model(model_id)
         if response["status_code"] != 200:
             raise HTTPException(
                 status_code=response["status_code"], detail=response["detail"]
@@ -76,7 +76,7 @@ def blocks_router(storage: MySQLStorage):
         property_id: int = Query(...),
         n_predictions: int = Query(...),
     ) -> List[PredictionGet]:
-        response = storage.get_predictions(block_id, property_id, n_predictions)
+        response = await storage.get_predictions(block_id, property_id, n_predictions)
         if type(response) is dict and response.get("status_code") != 200:
             raise HTTPException(
                 status_code=response["status_code"], detail=response["detail"]
@@ -88,7 +88,7 @@ def blocks_router(storage: MySQLStorage):
 
         for prediction in request.insert_values:
             try:
-                storage.add_prediction(
+                await storage.add_prediction(
                     prediction, request.insert_ts, request.query_uuid
                 )
             except IntegrityError as e:
@@ -104,11 +104,11 @@ def blocks_router(storage: MySQLStorage):
 
     @router.post("/property")
     async def add_property(property_data: PropertyPost):
-        return storage.add_property(property_data)
+        return await storage.add_property(property_data)
 
     @router.get("/property", response_model=List[PropertyGet])
     async def get_properties():
-        return storage.get_properties()
+        return await storage.get_properties()
 
     @router.post("/models/params")
     async def add_block_params(
@@ -139,7 +139,7 @@ def blocks_router(storage: MySQLStorage):
             filehash = hashlib.sha256(reads)
             file_object.write(reads)
 
-        new_id = storage.add_block_params(
+        new_id = await storage.add_block_params(
             model_params={
                 "name": name,
                 "description": description,

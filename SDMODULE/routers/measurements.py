@@ -17,7 +17,7 @@ def get_measurements_router(storage: MySQLStorage):
     async def add_measurement(request: MeasurementsPost):
         for measurement in request.insert_values:
             try:
-                storage.add_measurement(
+                await storage.add_measurement(
                     measurement, request.insert_ts, request.query_uuid
                 )
             except IntegrityError as e:
@@ -37,6 +37,6 @@ def get_measurements_router(storage: MySQLStorage):
     ) -> List[MeasurementsGet]:
         if len(measurement_source_ids) == 0:
             raise HTTPException(status_code=400, detail="Indicate the sources")
-        return storage.get_last_three_measurements_for_sources(measurement_source_ids)
+        return await storage.get_last_three_measurements_for_sources(measurement_source_ids)
 
     return router

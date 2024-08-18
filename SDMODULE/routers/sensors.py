@@ -15,18 +15,18 @@ def get_sensors_router(storage: MySQLStorage):
             None, description="Filter sensors by their active state"
         )
     ):
-        return storage.get_sensors_info(need_active)
+        return await storage.get_sensors_info(need_active)
 
     @router.post("/")
     async def add_sensor(sensor: SensorInfoPost):
-        storage.add_sensor(sensor)
+        await storage.add_sensor(sensor)
 
     @router.patch("/{sensor_item_id}/enable")
     async def enable_sensor(sensor_item_id: int):
-        storage.toggle_sensor_activation(sensor_item_id, True)
+        await storage.toggle_sensor_activation(sensor_item_id, True)
 
     @router.patch("/{sensor_item_id}/disable")
     async def disable_sensor(sensor_item_id: int):
-        storage.toggle_sensor_activation(sensor_item_id, False)
+        await storage.toggle_sensor_activation(sensor_item_id, False)
 
     return router

@@ -14,10 +14,10 @@ def get_measurement_sources_router(storage: MySQLStorage):
 
     @router.get("/", response_model=List[MeasurementSourceInfoGet])
     async def get_measurement_sources():
-        return storage.get_measurement_sources()
+        return await storage.get_measurement_sources()
 
     @router.post("/")
     async def add_measurement_source(source: MeasurementSourceInfoPost):
-        storage.add_measurement_source(source)
+        await storage.add_measurement_source(source)
 
     return router
