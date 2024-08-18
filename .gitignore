@@ -20,3 +20,4 @@ ML*.csv
 *.gif
 .venv
 DTInterface/db.sqlite3
+SDMODULE/uploads/

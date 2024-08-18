@@ -14,9 +14,9 @@ from handler import Handler
 from pathlib import Path
 import hashlib
 
-block_data = requests.get(f"http://127.0.0.1:3000/blocks?need_active=true")
+block_data = requests.get(f"http://sd-module:3000/blocks?need_active=true")
 
-config = {"POLLINT": 8, "SDIP": "localhost", "SDPORT": 3000, "LOGNAME": "MLMODULE"}
+config = {"POLLINT": 8, "SDIP": "sd-module", "SDPORT": 3000, "LOGNAME": "MLMODULE"}
 
 handler_obj = Handler(config=config)
 
