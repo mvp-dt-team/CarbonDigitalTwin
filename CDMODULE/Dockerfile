@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 3005
 
 # Определяем команду для запуска микросервиса  
-CMD ["python", "main.py"]
+CMD ["python", "./src/app.py"]

@@ -14,9 +14,15 @@ from handler import Handler
 from pathlib import Path
 import hashlib
 
-block_data = requests.get(f"http://sd-module:3000/blocks?need_active=true")
+from yaml import load
+from yaml.loader import SafeLoader
 
-config = {"POLLINT": 8, "SDIP": "sd-module", "SDPORT": 3000, "LOGNAME": "MLMODULE"}
+with open("../config.yaml", "r") as config_file:
+    config = load(config_file, Loader=SafeLoader)
+
+block_data = requests.get(
+    f"http://{config['SDIP']}:{config['SDPORT']}/blocks?need_active=true"
+)
 
 handler_obj = Handler(config=config)
 

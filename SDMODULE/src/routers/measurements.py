@@ -37,6 +37,8 @@ def get_measurements_router(storage: MySQLStorage):
     ) -> List[MeasurementsGet]:
         if len(measurement_source_ids) == 0:
             raise HTTPException(status_code=400, detail="Indicate the sources")
-        return await storage.get_last_three_measurements_for_sources(measurement_source_ids)
+        return await storage.get_last_three_measurements_for_sources(
+            measurement_source_ids
+        )
 
     return router

@@ -46,7 +46,7 @@ import time
 from yaml import load
 from yaml.loader import SafeLoader
 
-with open("config.yaml", "r") as config_file:
+with open("../config.yaml", "r") as config_file:
     config = load(config_file, Loader=SafeLoader)
 
 import logging
@@ -73,7 +73,9 @@ def sqlalchemy_session(engine_url):
                         await session.rollback()  # Откат в случае ошибки
                         raise
                     return result
+
         return wrapper
+
     return decorator
 
 
@@ -115,20 +117,25 @@ class MySQLStorage:
         measurements = []
         for source_id in measurement_source_ids:
             result = await session.execute(
-            select(MeasurementModel)
-            .where(MeasurementModel.measurement_source_id == source_id)
-            .order_by(desc(MeasurementModel.insert_ts))
-            .limit(3)
-        )
-            result_data = result.scalars().all()  # Получаем результат как объекты моделей
-            measurements.extend([
-                MeasurementsGet(
-                    m_data=data.m_data,
-                    sensor_item_id=data.sensor_item_id,
-                    measurement_source_id=data.measurement_source_id,
-                    insert_ts=data.insert_ts
-                ) for data in result_data 
-            ])
+                select(MeasurementModel)
+                .where(MeasurementModel.measurement_source_id == source_id)
+                .order_by(desc(MeasurementModel.insert_ts))
+                .limit(3)
+            )
+            result_data = (
+                result.scalars().all()
+            )  # Получаем результат как объекты моделей
+            measurements.extend(
+                [
+                    MeasurementsGet(
+                        m_data=data.m_data,
+                        sensor_item_id=data.sensor_item_id,
+                        measurement_source_id=data.measurement_source_id,
+                        insert_ts=data.insert_ts,
+                    )
+                    for data in result_data
+                ]
+            )
             logger.info(f"Get measurements {measurements}")
         return measurements
 
@@ -138,9 +145,7 @@ class MySQLStorage:
     async def get_measurement_sources(
         self, session: AsyncSession
     ) -> List[MeasurementSourceInfoGet]:
-        sources_data = await session.execute(
-            select(MeasurementSourceModel)
-        )
+        sources_data = await session.execute(select(MeasurementSourceModel))
         sources_data = sources_data.scalars().all()
         sources = [
             MeasurementSourceInfoGet(
@@ -167,9 +172,7 @@ class MySQLStorage:
     # SENSORS ##############
     @sqlalchemy_session(engine_url)
     async def get_sensors_models(self, session) -> List[SensorModelInfoGet]:
-        models_data = await session.execute(
-            select(SensorModel)
-            )
+        models_data = await session.execute(select(SensorModel))
         models_data = models_data.scalars().all()
         models = [
             SensorModelInfoGet(
@@ -189,7 +192,9 @@ class MySQLStorage:
     @sqlalchemy_session(engine_url)
     async def get_sensors_info(self, need_active: bool, session) -> List[SensorInfoGet]:
         if need_active:
-            query = await session.execute(select(SensorItemModel).where(SensorItemModel.is_active == True))
+            query = await session.execute(
+                select(SensorItemModel).where(SensorItemModel.is_active == True)
+            )
         else:
             query = await session.execute(select(SensorItemModel))
 
@@ -204,8 +209,9 @@ class MySQLStorage:
             model_id = raw_sensor.sensor_id
 
             parameters_query = await session.execute(
-                select(SensorParamsModel)
-                .where(SensorParamsModel.sensor_item_id == sensor_id)
+                select(SensorParamsModel).where(
+                    SensorParamsModel.sensor_item_id == sensor_id
+                )
             )
             parameters_query = parameters_query.scalars().all()
             sensor_parameters = {
@@ -222,7 +228,8 @@ class MySQLStorage:
                 )
                 .join(
                     SensorSourceMappingModel,
-                    MeasurementSourceModel.id == SensorSourceMappingModel.measurement_source_id,
+                    MeasurementSourceModel.id
+                    == SensorSourceMappingModel.measurement_source_id,
                 )
                 .where(SensorSourceMappingModel.sensor_item_id == sensor_id)
             )
@@ -303,7 +310,9 @@ class MySQLStorage:
         logger.info(f"Add new sensor {new_sensor_item}")
 
     @sqlalchemy_session(engine_url)
-    async def toggle_sensor_activation(self, sensor_item_id: int, is_active: bool, session):
+    async def toggle_sensor_activation(
+        self, sensor_item_id: int, is_active: bool, session
+    ):
         stmt = (
             update(SensorItemModel)
             .where(SensorItemModel.id == sensor_item_id)
@@ -318,17 +327,25 @@ class MySQLStorage:
     @sqlalchemy_session(engine_url)
     async def get_block_list(self, need_active: bool, session: AsyncSession):
         if need_active:
-            blocks_data = await session.execute(select(BlockModel).where(BlockModel.active == need_active))
+            blocks_data = await session.execute(
+                select(BlockModel).where(BlockModel.active == need_active)
+            )
         else:
             blocks_data = await session.execute(select(BlockModel))
         blocks_data = blocks_data.scalars().all()
         blocks = {}
         for block in blocks_data:
-            model_list = await session.execute(select(ModelsModel).where(ModelsModel.block_id == block.id))
+            model_list = await session.execute(
+                select(ModelsModel).where(ModelsModel.block_id == block.id)
+            )
             model_list = model_list.scalars().all()
             if len(model_list) > 0:
                 block_model = model_list[-1]
-                querry_model_mapping_get = await session.execute(select(ModelMappingModel).where(ModelMappingModel.model_id == block_model.id))
+                querry_model_mapping_get = await session.execute(
+                    select(ModelMappingModel).where(
+                        ModelMappingModel.model_id == block_model.id
+                    )
+                )
                 blocks[block] = [
                     ModelMappingGet(
                         source_type=x.source_type,
@@ -406,7 +423,9 @@ class MySQLStorage:
                     result = await session.execute(stmt)
                     return result.scalars().first()
 
-                property_data = await asyncio.gather(*[fetch_property(session, x) for x in properties_ids])
+                property_data = await asyncio.gather(
+                    *[fetch_property(session, x) for x in properties_ids]
+                )
                 modelsmapping.append(
                     BlockModelGet(
                         id=block.id,
@@ -485,7 +504,9 @@ class MySQLStorage:
 
     @sqlalchemy_session(engine_url)
     async def toggle_block(self, block_id: int, session):
-        block = await session.execute(select(BlockModel).where(BlockModel.id == block_id))
+        block = await session.execute(
+            select(BlockModel).where(BlockModel.id == block_id)
+        )
         block = block.scalars().first()
         if not block:
             return {"status_code": 404, "detail": "Block not found"}
@@ -507,11 +528,15 @@ class MySQLStorage:
 
     @sqlalchemy_session(engine_url)
     async def get_model(self, model_id: int, session):
-        model = await session.execute(select(ModelsModel).where(ModelsModel.id == model_id))
+        model = await session.execute(
+            select(ModelsModel).where(ModelsModel.id == model_id)
+        )
         model: ModelsModel = model.scalars().first()
         if not model:
             return {"status_code": 404, "detail": "Model not found"}
-        file = await session.execute(select(FileModel).where(FileModel.id == model.file_id))
+        file = await session.execute(
+            select(FileModel).where(FileModel.id == model.file_id)
+        )
         file: FileModel = file.scalars().first()
         if not file:
             return {"status_code": 404, "detail": "Model file not found"}
@@ -526,11 +551,15 @@ class MySQLStorage:
 
     @sqlalchemy_session(engine_url)
     async def check_model(self, model_id: int, session):
-        model = await session.execute(select(ModelsModel).where(ModelsModel.id == model_id))
+        model = await session.execute(
+            select(ModelsModel).where(ModelsModel.id == model_id)
+        )
         model: ModelsModel = model.scalars().first()
         if not model:
             return {"status_code": 404, "detail": "Model not found"}
-        file = await session.execute(select(FileModel).where(FileModel.id == model.file_id))
+        file = await session.execute(
+            select(FileModel).where(FileModel.id == model.file_id)
+        )
         file: FileModel = file.scalars().first()
         if not file:
             return {"status_code": 404, "detail": "Model file not found"}
@@ -553,11 +582,13 @@ class MySQLStorage:
             }
         predictions_data = await session.execute(
             select(PredictionModel)
-            .where(PredictionModel.block_id == block_id,
-                   PredictionModel.property_id == property_id)
+            .where(
+                PredictionModel.block_id == block_id,
+                PredictionModel.property_id == property_id,
+            )
             .order_by(desc(PredictionModel.insert_ts))
             .limit(n_predictions)
-            )
+        )
         predictions_data = predictions_data.scalars().all()
         predictions = [
             PredictionGet(

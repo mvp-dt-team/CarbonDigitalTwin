@@ -12,7 +12,7 @@ import logging
 from yaml import load
 from yaml.loader import SafeLoader
 
-with open("config.yaml", "r") as config_file:
+with open("../config.yaml", "r") as config_file:
     config = load(config_file, Loader=SafeLoader)
 
 # Настройки MySQL
