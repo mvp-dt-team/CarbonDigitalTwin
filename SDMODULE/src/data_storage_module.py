@@ -1,18 +1,18 @@
 from fastapi import FastAPI
 
-from mysql_storage import MySQLStorage
-from routers.measurement_sources import get_measurement_sources_router
-from routers.measurements import get_measurements_router
-from routers.sensor_models import get_sensor_models_router
-from routers.sensors import get_sensors_router
-from routers.blocks_router import blocks_router
+from src.mysql_storage import MySQLStorage
+from src.routers.measurement_sources import get_measurement_sources_router
+from src.routers.measurements import get_measurements_router
+from src.routers.sensor_models import get_sensor_models_router
+from src.routers.sensors import get_sensors_router
+from src.routers.blocks_router import blocks_router
 
 import logging
 
 from yaml import load
 from yaml.loader import SafeLoader
 
-with open("../config.yaml", "r") as config_file:
+with open("config.yaml", "r") as config_file:
     config = load(config_file, Loader=SafeLoader)
 
 # Настройки MySQL

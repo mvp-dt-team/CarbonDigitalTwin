@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query, HTTPException, UploadFile, File, Form
 from starlette.responses import FileResponse
 from typing import List, Annotated
-from network_models.blocks import (
+from src.network_models.blocks import (
     AttachmentGet,
     AttachmentPost,
     PredictionGet,
@@ -14,7 +14,7 @@ from network_models.blocks import (
     PropertyPost,
     PredictionMassivePost,
 )
-from mysql_storage import MySQLStorage
+from src.mysql_storage import MySQLStorage
 from mysql.connector import IntegrityError
 
 import os

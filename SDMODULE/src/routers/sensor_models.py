@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from typing import List
-from network_models.sensor_model_info import SensorModelInfoGet, SensorModelInfoPost
-from mysql_storage import MySQLStorage
+from src.network_models.sensor_model_info import SensorModelInfoGet, SensorModelInfoPost
+from src.mysql_storage import MySQLStorage
 
 
 def get_sensor_models_router(storage: MySQLStorage):

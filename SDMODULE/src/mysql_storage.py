@@ -7,7 +7,7 @@ from sqlalchemy.future import select
 import asyncio
 from sqlalchemy import update
 
-from orm import (
+from src.orm import (
     FileModel,
     ModelMappingModel,
     ModelsModel,
@@ -22,14 +22,14 @@ from orm import (
     PredictionModel,
 )
 
-from network_models.measurement_source_info import (
+from src.network_models.measurement_source_info import (
     MeasurementSourceInfoGet,
     MeasurementSourceInfoPost,
 )
-from network_models.measurements_info import MeasurementsGet
-from network_models.sensor_model_info import SensorModelInfoPost, SensorModelInfoGet
-from network_models.sensors_info import SensorInfoGet, SensorInfoPost, SensorPropertyGet
-from network_models.blocks import (
+from src.network_models.measurements_info import MeasurementsGet
+from src.network_models.sensor_model_info import SensorModelInfoPost, SensorModelInfoGet
+from src.network_models.sensors_info import SensorInfoGet, SensorInfoPost, SensorPropertyGet
+from src.network_models.blocks import (
     ModelMappingGet,
     PropertyGet,
     MLModelGet,
@@ -46,7 +46,7 @@ import time
 from yaml import load
 from yaml.loader import SafeLoader
 
-with open("../config.yaml", "r") as config_file:
+with open("config.yaml", "r") as config_file:
     config = load(config_file, Loader=SafeLoader)
 
 import logging

@@ -1,0 +1,11 @@
+INFO:DataStorageModule:Add sensors model <src.orm.SensorModel object at 0x0000021127B2D670>
+INFO:DataStorageModule:Add sensors model <src.orm.SensorModel object at 0x0000021127B2D6D0>
+INFO:DataStorageModule:Add sensors model <src.orm.SensorModel object at 0x0000021127C3A330>
+INFO:DataStorageModule:Add measurement sources <src.orm.MeasurementSourceModel object at 0x0000021127C3A0F0>
+INFO:DataStorageModule:Add measurement sources <src.orm.MeasurementSourceModel object at 0x0000021127C39DC0>
+INFO:DataStorageModule:Add measurement sources <src.orm.MeasurementSourceModel object at 0x0000021127C3A090>
+INFO:DataStorageModule:Add measurement sources <src.orm.MeasurementSourceModel object at 0x0000021127C3A090>
+INFO:DataStorageModule:Add measurement sources <src.orm.MeasurementSourceModel object at 0x0000021127C03F80>
+INFO:DataStorageModule:Add new sensor <src.orm.SensorItemModel object at 0x0000021127C771A0>
+INFO:DataStorageModule:Add new sensor <src.orm.SensorItemModel object at 0x0000021127C77080>
+INFO:DataStorageModule:Add new sensor <src.orm.SensorItemModel object at 0x0000021127C76B70>

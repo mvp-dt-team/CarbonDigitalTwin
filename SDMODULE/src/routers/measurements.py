@@ -4,8 +4,8 @@ from mysql.connector import IntegrityError
 from fastapi import APIRouter, Query, HTTPException
 from typing import List, Annotated
 
-from network_models.measurements_info import MeasurementsGet, MeasurementsPost
-from mysql_storage import MySQLStorage
+from src.network_models.measurements_info import MeasurementsGet, MeasurementsPost
+from src.mysql_storage import MySQLStorage
 
 
 def get_measurements_router(storage: MySQLStorage):
