@@ -5,7 +5,7 @@ from functools import wraps
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.future import select
 import asyncio
-from sqlalchemy import update
+from sqlalchemy import update, insert
 
 from src.orm import (
     FileModel,
@@ -43,6 +43,7 @@ from src.network_models.blocks import (
 )
 
 import time
+
 from yaml import load
 from yaml.loader import SafeLoader
 
@@ -58,18 +59,22 @@ UPLOAD_DIR = os.path.abspath("./uploads")
 
 
 def sqlalchemy_session(engine_url):
-    engine = create_async_engine(engine_url)
-
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
+            if os.getenv("TESTING"):
+                return await func(*args, **kwargs)
+            engine = create_async_engine(engine_url, pool_recycle=3600)
             async with AsyncSession(engine) as session:
                 async with session.begin():
                     try:
                         # Передаем сессию как аргумент в функцию
                         result = await func(*args, session=session, **kwargs)
+                        print('Connection to db..')
                         await session.commit()  # Явное подтверждение транзакции
+                        print('Connection succesfull!')
                     except Exception as e:
+                        print(f"ОШИБКА! {e}")
                         await session.rollback()  # Откат в случае ошибки
                         raise
                     return result
@@ -81,11 +86,6 @@ def sqlalchemy_session(engine_url):
 
 class MySQLStorage:
     engine_url = f"mysql+aiomysql://{config['USER']}:{config['PASSWORD']}@{config['HOST']}:3306/{config['DB']}"
-
-    # FOR TESTING !
-    # engine_url = f'sqlite:///app.db'
-    # def close(self):
-    #     self.mysql_connection.close()
 
     def __init__(self) -> None:
         logger.debug("module starting")
@@ -115,6 +115,7 @@ class MySQLStorage:
         self, measurement_source_ids: List[int], session: AsyncSession
     ) -> List[MeasurementsGet]:
         measurements = []
+        print('Я ВНУТРИ!')
         for source_id in measurement_source_ids:
             result = await session.execute(
                 select(MeasurementModel)
@@ -122,6 +123,7 @@ class MySQLStorage:
                 .order_by(desc(MeasurementModel.insert_ts))
                 .limit(3)
             )
+            print('Я ПОСЛЕ EXECUTE!')
             result_data = (
                 result.scalars().all()
             )  # Получаем результат как объекты моделей
@@ -463,7 +465,7 @@ class MySQLStorage:
             filehash=model_params["file_hash"],
         )
         session.add(new_file)
-        await session.flush()
+        await session.commit()
 
         new_model = ModelsModel(
             name=model_params["name"],
@@ -473,29 +475,20 @@ class MySQLStorage:
             block_id=model_params["block_id"],
         )
         session.add(new_model)
-        await session.flush()
+        await session.commit()
 
+        mappings = []
         for sensor in sensors:
             for property in properties:
-                model_map = ModelMappingModel(
-                    measurement_source_id=sensor["measurement_source_id"],
-                    sensor_item_id=sensor["sensor_item_id"],
-                    source_type="sensor",
-                    model_id=new_model.id,
-                    property_id=property,
-                )
-                session.add(model_map)
+                mappings.append({'measurement_source_id': sensor["measurement_source_id"], 'sensor_item_id': sensor["sensor_item_id"], 'source_type': "sensor", 'model_id': new_model.id, 'property_id': property})
+                await session.execute(insert(ModelMappingModel).values(measurement_source_id=sensor["measurement_source_id"], sensor_item_id=sensor["sensor_item_id"], source_type="sensor", model_id=new_model.id, property_id=property))
 
         for block in source_blocks:
             for property in properties:
-                model_map = ModelMappingModel(
-                    property_source_id=block["source_property_id"],
-                    block_id=block["source_block_id"],
-                    source_type="block",
-                    model_id=new_model.id,
-                    property_id=property,
-                )
-                session.add(model_map)
+                mappings.append({'property_source_id': block["source_property_id"], 'block_id': block["source_block_id"], 'source_type': "block", 'model_id': new_model.id, 'property_id': property})
+        
+        await session.execute(insert(ModelMappingModel), mappings)
+        await session.commit()
 
         logger.info(
             f"Add model, {len(sensors)} sensor and {len(properties)} properties to block"
@@ -619,7 +612,7 @@ class MySQLStorage:
     async def add_property(self, property_data: PropertyPost, session: AsyncSession):
         property = PropertyModel(name=property_data.name, unit=property_data.unit)
         session.add(property)
-        await session.flush()
+        await session.commit()
         return {"status_code": 200, "added_id": property.id}
 
     @sqlalchemy_session(engine_url)

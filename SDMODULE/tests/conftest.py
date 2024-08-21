@@ -20,32 +20,33 @@ AsyncSessionLocal = sessionmaker(
     expire_on_commit=False,
 )
 
-@pytest.fixture(scope="function")
-async def async_db_session():
-    async with engine.begin() as conn:
-        # Удаляем все таблицы
-        # await conn.run_sync(Base.metadata.drop_all)
-        print("Я тут!")
-        # Создаем таблицы
-        await conn.run_sync(Base.metadata.create_all)
-        # Наполняем таблицы тестовыми данными
-        await initialize_data(AsyncSessionLocal())
+# @pytest.fixture(scope="function")
+# async def async_db_session():
+#     # async with engine.begin() as conn:
+#     #     # Удаляем все таблицы
+#     #     # await conn.run_sync(Base.metadata.drop_all)
+#     #     print("Я тут!")
+#     #     # Создаем таблицы
+#     #     await conn.run_sync(Base.metadata.create_all)
+#     #     # Наполняем таблицы тестовыми данными
+#     #     await initialize_data(AsyncSessionLocal())
+#     # return AsyncSessionLocal()
 
-    async with AsyncSessionLocal() as session:
-        print('Я ТУТ!')
-        await session.execute(delete(MeasurementModel))
-        await session.execute(delete(PredictionModel))
-        await session.commit()
-        yield session
+#     async with AsyncSessionLocal() as session:
+#         # await session.execute(delete(MeasurementModel))
+#         # await session.execute(delete(PredictionModel))
+#         # await session.commit()
+#         yield session
+#         # await session.close()
 
-    await engine.dispose()
+#     # await engine.dispose()
 
-async def initialize_data(session):
-    # Здесь ваш алгоритм для добавления тестовых данных в базу
-    pass
-    # new_user = User(id=1, name="John Doe")
-    # session.add(new_user)
-    # await session.commit()
+# async def initialize_data(session):
+#     # Здесь ваш алгоритм для добавления тестовых данных в базу
+#     pass
+#     # new_user = User(id=1, name="John Doe")
+#     # session.add(new_user)
+#     # await session.commit()
 
 # def pytest_html_results_table_header(cells):
 #     cells.insert(2, "<th>Description</th>")
