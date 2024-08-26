@@ -28,7 +28,11 @@ from src.network_models.measurement_source_info import (
 )
 from src.network_models.measurements_info import MeasurementsGet
 from src.network_models.sensor_model_info import SensorModelInfoPost, SensorModelInfoGet
-from src.network_models.sensors_info import SensorInfoGet, SensorInfoPost, SensorPropertyGet
+from src.network_models.sensors_info import (
+    SensorInfoGet,
+    SensorInfoPost,
+    SensorPropertyGet,
+)
 from src.network_models.blocks import (
     ModelMappingGet,
     PropertyGet,
@@ -70,9 +74,9 @@ def sqlalchemy_session(engine_url):
                     try:
                         # Передаем сессию как аргумент в функцию
                         result = await func(*args, session=session, **kwargs)
-                        print('Connection to db..')
+                        print("Connection to db..")
                         await session.commit()  # Явное подтверждение транзакции
-                        print('Connection succesfull!')
+                        print("Connection succesfull!")
                     except Exception as e:
                         print(f"ОШИБКА! {e}")
                         await session.rollback()  # Откат в случае ошибки
@@ -115,7 +119,7 @@ class MySQLStorage:
         self, measurement_source_ids: List[int], session: AsyncSession
     ) -> List[MeasurementsGet]:
         measurements = []
-        print('Я ВНУТРИ!')
+        print("Я ВНУТРИ!")
         for source_id in measurement_source_ids:
             result = await session.execute(
                 select(MeasurementModel)
@@ -123,7 +127,7 @@ class MySQLStorage:
                 .order_by(desc(MeasurementModel.insert_ts))
                 .limit(3)
             )
-            print('Я ПОСЛЕ EXECUTE!')
+            print("Я ПОСЛЕ EXECUTE!")
             result_data = (
                 result.scalars().all()
             )  # Получаем результат как объекты моделей
@@ -480,13 +484,37 @@ class MySQLStorage:
         mappings = []
         for sensor in sensors:
             for property in properties:
-                mappings.append({'measurement_source_id': sensor["measurement_source_id"], 'sensor_item_id': sensor["sensor_item_id"], 'source_type': "sensor", 'model_id': new_model.id, 'property_id': property})
-                await session.execute(insert(ModelMappingModel).values(measurement_source_id=sensor["measurement_source_id"], sensor_item_id=sensor["sensor_item_id"], source_type="sensor", model_id=new_model.id, property_id=property))
+                mappings.append(
+                    {
+                        "measurement_source_id": sensor["measurement_source_id"],
+                        "sensor_item_id": sensor["sensor_item_id"],
+                        "source_type": "sensor",
+                        "model_id": new_model.id,
+                        "property_id": property,
+                    }
+                )
+                await session.execute(
+                    insert(ModelMappingModel).values(
+                        measurement_source_id=sensor["measurement_source_id"],
+                        sensor_item_id=sensor["sensor_item_id"],
+                        source_type="sensor",
+                        model_id=new_model.id,
+                        property_id=property,
+                    )
+                )
 
         for block in source_blocks:
             for property in properties:
-                mappings.append({'property_source_id': block["source_property_id"], 'block_id': block["source_block_id"], 'source_type': "block", 'model_id': new_model.id, 'property_id': property})
-        
+                mappings.append(
+                    {
+                        "property_source_id": block["source_property_id"],
+                        "block_id": block["source_block_id"],
+                        "source_type": "block",
+                        "model_id": new_model.id,
+                        "property_id": property,
+                    }
+                )
+
         await session.execute(insert(ModelMappingModel), mappings)
         await session.commit()
 

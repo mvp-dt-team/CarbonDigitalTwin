@@ -10,7 +10,7 @@ from sqlalchemy import update, delete
 
 with open("config.yaml", "r") as config_file:
     config = load(config_file, Loader=SafeLoader)
-                  
+
 DATABASE_URL = f"mysql+aiomysql://{config['USER']}:{config['PASSWORD']}@{config['HOST']}:3306/{config['DB']}"
 # Создание асинхронного движка и фабрики сессий
 engine = create_async_engine(DATABASE_URL, echo=True)

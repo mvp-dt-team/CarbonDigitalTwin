@@ -3,6 +3,7 @@ data.db
 MLMODULE/sensor-module/__pycache__
 .coverage
 MLMODULE/sensor-module/assets
+
 report.html
 venv
 .vscode
@@ -21,3 +22,9 @@ ML*.csv
 .venv
 DTInterface/db.sqlite3
 SDMODULE/uploads/
+
+assets/
+SDMODULE/src/test_async.py
+SDMODULE/src/config.yaml
+CDMODULE/src/config.yaml
+MLMODULE/src/config.yaml

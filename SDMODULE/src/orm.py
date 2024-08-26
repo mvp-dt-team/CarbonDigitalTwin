@@ -36,7 +36,9 @@ class Base(AsyncAttrs, DeclarativeBase):
 from yaml import load
 from yaml.loader import SafeLoader
 
-with open(r"C:\Users\boiko.k.v\Desktop\Carbon-Digital-Twin\SDMODULE\src\config.yaml", "r") as config_file:
+with open(
+    r"C:\Users\boiko.k.v\Desktop\Carbon-Digital-Twin\SDMODULE\src\config.yaml", "r"
+) as config_file:
     config = load(config_file, Loader=SafeLoader)
 
 
@@ -60,7 +62,7 @@ class SensorItemModel(Base):
     __tablename__ = "sensor_item"
     id = Column(Integer, primary_key=True, autoincrement=True)
     sensor_id = Column(Integer, ForeignKey("sensor.id"), nullable=False)
-    installation_date = Column(DateTime, default=datetime.utcnow, nullable=False)
+    installation_date = Column(DateTime, default=datetime.utcnow, nullable=True)
     is_active = Column(Boolean, nullable=False)
     sensor_type = Column(VARCHAR(50), nullable=False)
     addition_info = Column(Text)
